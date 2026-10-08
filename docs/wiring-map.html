@@ -1,0 +1,280 @@
+<title>Robot Dog Wiring Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: single reading column, wiring diagram full-width, reference tables below. Wire colours are content, not decoration. */
+:root{
+  --bg:#f2f4f6; --surface:#ffffff; --ink:#18212c; --muted:#5a6676; --line:#d3dae2; --accent:#2457c5;
+  --w-batt:#cf3a2c; --w-5v:#d98200; --w-bus:#2463d8; --w-usb:#6a4ccf; --w-i2c:#16935c; --w-gpio:#bf347f;
+  --ok-bg:#e1f3e9; --ok-ink:#126b42; --buy-bg:#e2eafb; --buy-ink:#1f4fae; --chk-bg:#fbefd6; --chk-ink:#8a5600;
+  --opt-bg:#eceff3; --opt-ink:#4d5866; --no-ink:#8a95a3;
+  --f-display:"Archivo","Segoe UI",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#11161c; --surface:#19212a; --ink:#e4e9ef; --muted:#9aa6b4; --line:#2d3743; --accent:#7ea4ff;
+    --w-batt:#ff6b5c; --w-5v:#ffb340; --w-bus:#6e9dff; --w-usb:#a68cff; --w-i2c:#3fd18f; --w-gpio:#ff6fb6;
+    --ok-bg:#163527; --ok-ink:#7fe0ad; --buy-bg:#1a2a4d; --buy-ink:#a9c2ff; --chk-bg:#3a2c10; --chk-ink:#ffc96b;
+    --opt-bg:#232c37; --opt-ink:#b3bdc9; --no-ink:#6f7b89;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#11161c; --surface:#19212a; --ink:#e4e9ef; --muted:#9aa6b4; --line:#2d3743; --accent:#7ea4ff;
+  --w-batt:#ff6b5c; --w-5v:#ffb340; --w-bus:#6e9dff; --w-usb:#a68cff; --w-i2c:#3fd18f; --w-gpio:#ff6fb6;
+  --ok-bg:#163527; --ok-ink:#7fe0ad; --buy-bg:#1a2a4d; --buy-ink:#a9c2ff; --chk-bg:#3a2c10; --chk-ink:#ffc96b;
+  --opt-bg:#232c37; --opt-ink:#b3bdc9; --no-ink:#6f7b89;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.6 var(--f-body);padding-inline:20px;padding-block:32px 64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1,h2{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(28px,4vw,40px);font-weight:800;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:700}
+p{margin:0;max-width:68ch}
+.eyebrow{font:500 12px/1 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+header{display:flex;flex-direction:column;gap:12px}
+section{display:flex;flex-direction:column;gap:16px}
+.lede{color:var(--muted)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.legend i{width:26px;height:4px;border-radius:2px;display:inline-block}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto;padding:12px}
+.diagram svg{display:block;width:100%;min-width:760px;height:auto}
+svg .node{fill:var(--bg);stroke:var(--line);stroke-width:1.5}
+svg .node.pi{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+svg .chip{fill:var(--surface);stroke:var(--w-bus);stroke-width:1.5}
+svg .t{fill:var(--ink);font:700 15px var(--f-display)}
+svg .s{fill:var(--muted);font:400 12px var(--f-body)}
+svg .m{fill:var(--ink);font:500 11.5px var(--f-mono)}
+svg .lbl{font:500 11.5px var(--f-mono)}
+svg .wire{fill:none;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.batt{stroke:var(--w-batt)} .v5{stroke:var(--w-5v)} .bus{stroke:var(--w-bus)} .usb{stroke:var(--w-usb)} .i2c{stroke:var(--w-i2c)} .gpio{stroke:var(--w-gpio)}
+.f-batt{fill:var(--w-batt)} .f-5v{fill:var(--w-5v)} .f-bus{fill:var(--w-bus)} .f-usb{fill:var(--w-usb)} .f-i2c{fill:var(--w-i2c)} .f-gpio{fill:var(--w-gpio)}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+td.n,.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td .why{color:var(--muted);font-size:13px}
+.pill{display:inline-block;font:600 11.5px/1 var(--f-mono);letter-spacing:.04em;padding:5px 8px;border-radius:999px;white-space:nowrap}
+.have{background:var(--ok-bg);color:var(--ok-ink)} .buy{background:var(--buy-bg);color:var(--buy-ink)}
+.chk{background:var(--chk-bg);color:var(--chk-ink)} .opt{background:var(--opt-bg);color:var(--opt-ink)}
+.no{background:transparent;color:var(--no-ink);border:1px dashed var(--no-ink)}
+tr.skip td:nth-child(2){color:var(--no-ink);text-decoration:line-through}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:middle}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.card h3{margin:0;font:700 16px var(--f-display)}
+.divider{font:500 13px/1.7 var(--f-mono);background:var(--bg);border-radius:8px;padding:12px 14px;overflow-x:auto;white-space:pre;margin:0}
+ol,ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;max-width:72ch}
+.warn{border-left:3px solid var(--w-batt);padding-left:14px}
+code{font-family:var(--f-mono);font-size:.92em;background:var(--bg);padding:1px 5px;border-radius:4px}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">5-DOF → 9-servo quadruped · component map</div>
+  <h1>Robot Dog Wiring Map</h1>
+  <p class="lede">How every part connects: one battery feeds the servos and the Pi, the Pi runs the show over USB, and the two sensors plug into the Pi's pin header. The parts list at the bottom shows what you have, what to buy, and what you can skip.</p>
+  <div class="legend" aria-label="Wire colours">
+    <span><i style="background:var(--w-batt)"></i>Battery power (7.4 V)</span>
+    <span><i style="background:var(--w-5v)"></i>5 V power</span>
+    <span><i style="background:var(--w-usb)"></i>USB data</span>
+    <span><i style="background:var(--w-bus)"></i>Servo bus (power + data, one cable)</span>
+    <span><i style="background:var(--w-i2c)"></i>I²C (IMU)</span>
+    <span><i style="background:var(--w-gpio)"></i>GPIO (ultrasonic)</span>
+  </div>
+</header>
+
+<section>
+  <div class="diagram">
+    <svg viewBox="0 0 1000 620" role="img" aria-label="Wiring diagram: battery to servo controller and 5 V converter, converter to Raspberry Pi, Pi to controller by USB, controller to nine servos on one bus, ultrasonic and IMU sensors to the Pi.">
+      <!-- wires first, so boxes sit on top -->
+      <path class="wire batt" d="M250 72 H360"/>
+      <text class="lbl f-batt" x="266" y="62">7.4 V</text>
+      <path class="wire batt" d="M140 114 V230"/>
+      <text class="lbl f-batt" x="150" y="176">7.4 V</text>
+      <path class="wire v5" d="M250 270 H420 V400"/>
+      <text class="lbl f-5v" x="262" y="260">5 V → pins 2 &amp; 6</text>
+      <path class="wire usb" d="M530 130 V400"/>
+      <text class="lbl f-usb" x="540" y="270">USB cable</text>
+      <path class="wire bus" d="M610 80 H655 M655 60 V480 M655 60 H700 M655 165 H700 M655 270 H700 M655 375 H700 M655 480 H700"/>
+      <text class="lbl f-bus" x="614" y="70">bus</text>
+      <path class="wire gpio" d="M250 450 H330"/>
+      <text class="lbl f-gpio" x="254" y="440">pin 16/18</text>
+      <path class="wire i2c" d="M250 555 H330"/>
+      <text class="lbl f-i2c" x="256" y="545">pin 3/5</text>
+
+      <!-- battery -->
+      <rect class="node" x="30" y="30" width="220" height="84" rx="8"/>
+      <text class="t" x="46" y="60">Battery</text>
+      <text class="s" x="46" y="80">2S LiPo · 7.4 V nominal</text>
+      <text class="s" x="46" y="98">8.4 V when full</text>
+
+      <!-- UBEC -->
+      <rect class="node" x="30" y="230" width="220" height="80" rx="8"/>
+      <text class="t" x="46" y="258">5 V converter (UBEC)</text>
+      <text class="s" x="46" y="278">7.4 V in → 5 V out</text>
+      <text class="s" x="46" y="296">5 A rating needed</text>
+
+      <!-- controller -->
+      <rect class="node" x="360" y="30" width="250" height="100" rx="8"/>
+      <text class="t" x="376" y="58">Servo controller</text>
+      <text class="s" x="376" y="78">Hiwonder bus board (you have it)</text>
+      <text class="s" x="376" y="96">Battery in · USB to Pi</text>
+      <text class="s" x="376" y="114">Bus out to all 9 servos</text>
+
+      <!-- Pi -->
+      <rect class="node pi" x="330" y="400" width="280" height="190" rx="8"/>
+      <text class="t" x="348" y="430">Raspberry Pi 5</text>
+      <text class="s" x="348" y="450">Runs the gait, reads sensors, decides</text>
+      <text class="m" x="348" y="482">USB-A  ↔ servo controller</text>
+      <text class="m" x="348" y="504">pin 2/6 ← 5 V + GND</text>
+      <text class="m" x="348" y="526">pin 3/5 ↔ IMU (SDA/SCL)</text>
+      <text class="m" x="348" y="548">pin 16  → sonar Trig</text>
+      <text class="m" x="348" y="570">pin 18  ← sonar Echo</text>
+
+      <!-- sensors -->
+      <rect class="node" x="30" y="410" width="220" height="80" rx="8"/>
+      <text class="t" x="46" y="438">HC-SR04 ultrasonic</text>
+      <text class="s" x="46" y="458">Obstacle distance, 5 V</text>
+      <text class="s" x="46" y="476">Echo via 1 kΩ / 2 kΩ divider</text>
+      <rect class="node" x="30" y="520" width="220" height="70" rx="8"/>
+      <text class="t" x="46" y="548">MPU6050 IMU</text>
+      <text class="s" x="46" y="568">Tilt + motion · I²C · 3.3 V</text>
+
+      <!-- servos -->
+      <rect class="node" x="700" y="25" width="270" height="70" rx="8"/>
+      <text class="t" x="716" y="55">Head</text>
+      <text class="s" x="716" y="75">turns side to side</text>
+      <rect class="chip" x="890" y="40" width="64" height="40" rx="6"/><text class="m" x="905" y="65">ID 9</text>
+
+      <g>
+        <rect class="node" x="700" y="120" width="270" height="90" rx="8"/>
+        <text class="t" x="716" y="146">Front left leg</text>
+        <rect class="chip" x="716" y="158" width="110" height="38" rx="6"/><text class="m" x="730" y="182">ID 1 · hip</text>
+        <rect class="chip" x="840" y="158" width="114" height="38" rx="6"/><text class="m" x="854" y="182">ID 2 · knee</text>
+      </g>
+      <g>
+        <rect class="node" x="700" y="225" width="270" height="90" rx="8"/>
+        <text class="t" x="716" y="251">Front right leg</text>
+        <rect class="chip" x="716" y="263" width="110" height="38" rx="6"/><text class="m" x="730" y="287">ID 3 · hip</text>
+        <rect class="chip" x="840" y="263" width="114" height="38" rx="6"/><text class="m" x="854" y="287">ID 4 · knee</text>
+      </g>
+      <g>
+        <rect class="node" x="700" y="330" width="270" height="90" rx="8"/>
+        <text class="t" x="716" y="356">Rear left leg</text>
+        <rect class="chip" x="716" y="368" width="110" height="38" rx="6"/><text class="m" x="730" y="392">ID 5 · hip</text>
+        <rect class="chip" x="840" y="368" width="114" height="38" rx="6"/><text class="m" x="854" y="392">ID 6 · knee</text>
+      </g>
+      <g>
+        <rect class="node" x="700" y="435" width="270" height="90" rx="8"/>
+        <text class="t" x="716" y="461">Rear right leg</text>
+        <rect class="chip" x="716" y="473" width="110" height="38" rx="6"/><text class="m" x="730" y="497">ID 7 · hip</text>
+        <rect class="chip" x="840" y="473" width="114" height="38" rx="6"/><text class="m" x="854" y="497">ID 8 · knee</text>
+      </g>
+      <text class="s" x="700" y="560">All 9 servos share one bus. Any servo can plug</text>
+      <text class="s" x="700" y="578">into any other or any controller bus port;</text>
+      <text class="s" x="700" y="596">the ID decides which one moves.</text>
+    </svg>
+  </div>
+</section>
+
+<section>
+  <h2>Parts list</h2>
+  <p class="lede">Everything the robot needs, and nothing it doesn't. Two rows say <b>Check</b>: look at your hardware first, because you may not need to buy anything for them.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Status</th><th>Part</th><th>Qty</th><th>Job in the robot</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pill have">Have</span></td><td>LX-16A servos</td><td class="n">4</td><td>Legs. All four tested, IDs 1–4 set.</td></tr>
+        <tr><td><span class="pill have">Have</span></td><td>Hiwonder bus servo controller</td><td class="n">1</td><td>Turns the Pi's USB commands into servo moves.</td></tr>
+        <tr><td><span class="pill have">Have</span></td><td>Raspberry Pi 5 + microSD</td><td class="n">1</td><td>The brain.</td></tr>
+        <tr><td><span class="pill have">Have</span></td><td>2S LiPo battery + charger</td><td class="n">1</td><td>Powers everything.</td></tr>
+        <tr><td><span class="pill have">Have</span></td><td>USB cable (the one you used with the PC)</td><td class="n">1</td><td>Pi ↔ servo controller. A short one is tidier in the robot.</td></tr>
+        <tr><td><span class="pill have">Have</span></td><td>Dupont wires, soldering iron, PETG</td><td class="n">–</td><td>Sensor wiring, header pins and inserts, chassis.</td></tr>
+        <tr><td><span class="pill buy">Buy</span></td><td>LX-16A servos</td><td class="n">5</td><td>4 more leg joints + the head. <span class="why">Buy LX-16A only; don't mix models.</span></td></tr>
+        <tr><td><span class="pill buy">Buy</span></td><td>5 V UBEC, <b>5 A option</b></td><td class="n">1</td><td>Powers the Pi from the battery. <span class="why">Select 5 A (or 7 A) on the listing, not 3 A.</span></td></tr>
+        <tr><td><span class="pill buy">Buy</span></td><td>HC-SR04 (2-pack)</td><td class="n">1</td><td>Obstacle detection. One spare.</td></tr>
+        <tr><td><span class="pill buy">Buy</span></td><td>MPU6050 GY-521 (3-pack)</td><td class="n">1</td><td>Balance and tilt. Pins need soldering.</td></tr>
+        <tr><td><span class="pill buy">Buy</span></td><td>Resistor kit</td><td class="n">1</td><td>Three 1 kΩ resistors for the sonar's Echo divider.</td></tr>
+        <tr><td><span class="pill buy">Buy</span></td><td>M3 heat-set insert kit (with screws + tips)</td><td class="n">1</td><td>Holds the printed chassis together.</td></tr>
+        <tr><td><span class="pill buy">Buy</span></td><td>M2.5 × 10 mm screws + M2.5 nuts</td><td class="n">4+</td><td>Mounts the Pi onto printed posts.</td></tr>
+        <tr><td><span class="pill chk">Check</span></td><td>Battery splitter</td><td class="n">0–1</td><td>The battery must feed both the controller and the UBEC. <span class="why">If the controller's power input is a screw terminal, the UBEC wires share it and you buy nothing. If it's a plug, you need a Y-splitter that matches your battery's plug. Send me a photo of the controller's power input and the battery plug.</span></td></tr>
+        <tr><td><span class="pill chk">Check</span></td><td>Multimeter</td><td class="n">0–1</td><td>Checks the UBEC really outputs 5 V before it touches the Pi. <span class="why">Skip if you own one. It's cheap insurance for a Pi 5.</span></td></tr>
+        <tr><td><span class="pill have">Have</span></td><td>Pi 5 Active Cooler</td><td class="n">1</td><td>Keeps the Pi from slowing down when hot inside the body. Plugs into the FAN port.</td></tr>
+        <tr><td><span class="pill opt">Optional</span></td><td>Power switch</td><td class="n">1</td><td>Turns the robot off without unplugging the battery. Convenient, not required.</td></tr>
+        <tr class="skip"><td><span class="pill no">Skip</span></td><td>Standoff kit</td><td class="n">–</td><td>Printed posts + M2.5 screws do the same job.</td></tr>
+        <tr class="skip"><td><span class="pill no">Skip</span></td><td>Logic level shifter</td><td class="n">–</td><td>The resistor divider handles the sonar; the IMU is already 3.3 V.</td></tr>
+        <tr class="skip"><td><span class="pill no">Skip</span></td><td>BusLinker board</td><td class="n">–</td><td>Only needed for servo motor mode, which a walking dog doesn't use.</td></tr>
+        <tr class="skip"><td><span class="pill no">Skip (for now)</span></td><td>Servo extension cables</td><td class="n">–</td><td>Each servo comes with a cable. Only buy longer ones if the finished chassis needs them.</td></tr>
+        <tr class="skip"><td><span class="pill no">Skip</span></td><td>Separate Pi power supply for the robot</td><td class="n">–</td><td>The UBEC powers the Pi on the robot. Your usual USB-C supply is fine at the desk.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <h2>Raspberry Pi pin map</h2>
+  <p class="lede">Pin numbers are the physical positions on the 40-pin header: pin 1 is the corner pin nearest the SD card end, with odd pins on the inside row and even pins on the outside edge.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Pin</th><th>Name</th><th>Connects to</th><th>Wire</th></tr></thead>
+      <tbody>
+        <tr><td class="n">1</td><td class="mono">3.3 V</td><td>MPU6050 VCC</td><td><span class="swatch" style="background:var(--w-i2c)"></span>IMU</td></tr>
+        <tr><td class="n">2</td><td class="mono">5 V</td><td>UBEC + (red)</td><td><span class="swatch" style="background:var(--w-5v)"></span>Power in</td></tr>
+        <tr><td class="n">3</td><td class="mono">GPIO2 · SDA</td><td>MPU6050 SDA</td><td><span class="swatch" style="background:var(--w-i2c)"></span>IMU</td></tr>
+        <tr><td class="n">4</td><td class="mono">5 V</td><td>HC-SR04 VCC</td><td><span class="swatch" style="background:var(--w-gpio)"></span>Sonar</td></tr>
+        <tr><td class="n">5</td><td class="mono">GPIO3 · SCL</td><td>MPU6050 SCL</td><td><span class="swatch" style="background:var(--w-i2c)"></span>IMU</td></tr>
+        <tr><td class="n">6</td><td class="mono">GND</td><td>UBEC − (black)</td><td><span class="swatch" style="background:var(--w-5v)"></span>Power in</td></tr>
+        <tr><td class="n">9</td><td class="mono">GND</td><td>MPU6050 GND</td><td><span class="swatch" style="background:var(--w-i2c)"></span>IMU</td></tr>
+        <tr><td class="n">14</td><td class="mono">GND</td><td>HC-SR04 GND + bottom of divider</td><td><span class="swatch" style="background:var(--w-gpio)"></span>Sonar</td></tr>
+        <tr><td class="n">16</td><td class="mono">GPIO23</td><td>HC-SR04 Trig (direct)</td><td><span class="swatch" style="background:var(--w-gpio)"></span>Sonar</td></tr>
+        <tr><td class="n">18</td><td class="mono">GPIO24</td><td>HC-SR04 Echo, through the divider</td><td><span class="swatch" style="background:var(--w-gpio)"></span>Sonar</td></tr>
+        <tr><td class="n">USB</td><td class="mono">USB-A port</td><td>Servo controller</td><td><span class="swatch" style="background:var(--w-usb)"></span>USB</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="cols">
+  <div class="card">
+    <h3>Sonar Echo divider</h3>
+    <p>The HC-SR04 sends back 5 V, but Pi pins only take 3.3 V. Three 1 kΩ resistors drop it to a safe 3.3 V.</p>
+<pre class="divider">Echo ──[1 kΩ]──┬──► pin 18 (GPIO24)
+               │
+            [1 kΩ]
+            [1 kΩ]   (two in a row = 2 kΩ)
+               │
+              GND (pin 14)
+
+5 V × 2 ÷ 3 = 3.33 V at the pin</pre>
+  </div>
+  <div class="card">
+    <h3>Servo ID plan</h3>
+    <ul>
+      <li>IDs 1–4 are already set on your four servos. Use them for the front legs.</li>
+      <li>New LX-16A servos arrive set to <b>ID 1</b>. Plug them in <b>one at a time</b> and give each its new ID (5, 6, 7, 8, 9) before adding the next.</li>
+      <li>Label each servo with its ID on tape. It saves a lot of confusion later.</li>
+      <li>Hip = the joint where the leg meets the body. Knee = the middle of the leg.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Safety rules</h2>
+  <ol>
+    <li class="warn"><b>Never plug the Pi's USB-C power in while the UBEC is connected.</b> Two supplies on the Pi at once can damage it. On the bench, use one or the other.</li>
+    <li>Before the UBEC touches the Pi, measure its output: it must read about 5 V. Some UBECs have a 5 V / 6 V jumper; make sure it is set to 5 V.</li>
+    <li>Double-check pins 2 and 6 before powering up. 5 V on a wrong pin can kill the Pi.</li>
+    <li>A full 2S battery is 8.4 V, which is the LX-16A's top limit. Don't use a 3S (11.1 V) battery.</li>
+    <li>When the Pi runs from the UBEC it may show a "low power" warning. That's expected here; we'll set one config line to quiet it when we set up the Pi.</li>
+  </ol>
+</section>
+</div>
