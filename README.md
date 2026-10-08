@@ -4,6 +4,10 @@ A small quadruped robot dog: nine LewanSoul LX-16A bus servos (hip + knee on eac
 
 Goals: stable walking, turning, obstacle avoidance, and later closed-loop balance from the IMU.
 
+- **[DEVLOG.md](DEVLOG.md):** every step so far, with problems and fixes
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md):** what each part does, including the Pi's job
+- **[docs/wiring-map.html](docs/wiring-map.html):** wiring diagram, Pi pin map, parts list
+
 ## Status
 
 - [x] All four servos on hand bench-tested (IDs 1–4)
@@ -45,6 +49,8 @@ tools/servo_gui.py       Desktop test panel (Windows/macOS/Linux with a display)
 pi-setup/setup_usb.sh    One-time: lets non-root users open the servo controller on the Pi
 pi-setup/reset_pi_password.py  Reset the Pi password + add an SSH key via the SD card's cloud-init files
 docs/wiring-map.html     Wiring diagram, pin map, parts list
+docs/ARCHITECTURE.md     System design and planned modules
+DEVLOG.md                Dated build log
 ```
 
 ## Using it
