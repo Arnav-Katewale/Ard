@@ -188,7 +188,7 @@ code{font-family:var(--f-mono);font-size:.92em;background:var(--bg);padding:1px 
 
 <section>
   <h2>Parts list</h2>
-  <p class="lede">Everything the robot needs, and nothing it doesn't. Two rows say <b>Check</b>: look at your hardware first, because you may not need to buy anything for them.</p>
+  <p class="lede">Everything the robot needs, and nothing it doesn't. The one <b>Check</b> row is only needed if you don't already own one.</p>
   <div class="tbl">
     <table>
       <thead><tr><th>Status</th><th>Part</th><th>Qty</th><th>Job in the robot</th></tr></thead>
@@ -206,10 +206,10 @@ code{font-family:var(--f-mono);font-size:.92em;background:var(--bg);padding:1px 
         <tr><td><span class="pill buy">Buy</span></td><td>Resistor kit</td><td class="n">1</td><td>Three 1 kΩ resistors for the sonar's Echo divider.</td></tr>
         <tr><td><span class="pill buy">Buy</span></td><td>M3 heat-set insert kit (with screws + tips)</td><td class="n">1</td><td>Holds the printed chassis together.</td></tr>
         <tr><td><span class="pill buy">Buy</span></td><td>M2.5 × 10 mm screws + M2.5 nuts</td><td class="n">4+</td><td>Mounts the Pi onto printed posts.</td></tr>
-        <tr><td><span class="pill chk">Check</span></td><td>Battery splitter</td><td class="n">0–1</td><td>The battery must feed both the controller and the UBEC. <span class="why">If the controller's power input is a screw terminal, the UBEC wires share it and you buy nothing. If it's a plug, you need a Y-splitter that matches your battery's plug. Send me a photo of the controller's power input and the battery plug.</span></td></tr>
+        <tr class="skip"><td><span class="pill no">Skip</span></td><td>Battery splitter</td><td class="n">–</td><td>Not needed: the controller has a 2-screw power terminal. The UBEC input wires share it with the battery wires (red with red, black with black).</td></tr>
         <tr><td><span class="pill chk">Check</span></td><td>Multimeter</td><td class="n">0–1</td><td>Checks the UBEC really outputs 5 V before it touches the Pi. <span class="why">Skip if you own one. It's cheap insurance for a Pi 5.</span></td></tr>
         <tr><td><span class="pill have">Have</span></td><td>Pi 5 Active Cooler</td><td class="n">1</td><td>Keeps the Pi from slowing down when hot inside the body. Plugs into the FAN port.</td></tr>
-        <tr><td><span class="pill opt">Optional</span></td><td>Power switch</td><td class="n">1</td><td>Turns the robot off without unplugging the battery. Convenient, not required.</td></tr>
+        <tr><td><span class="pill opt">Optional</span></td><td>Main power switch</td><td class="n">1</td><td>The controller's own switch doesn't turn off the Pi, because the UBEC connects straight to the power terminal. Until then, unplug the battery to switch everything off.</td></tr>
         <tr class="skip"><td><span class="pill no">Skip</span></td><td>Standoff kit</td><td class="n">–</td><td>Printed posts + M2.5 screws do the same job.</td></tr>
         <tr class="skip"><td><span class="pill no">Skip</span></td><td>Logic level shifter</td><td class="n">–</td><td>The resistor divider handles the sonar; the IMU is already 3.3 V.</td></tr>
         <tr class="skip"><td><span class="pill no">Skip</span></td><td>BusLinker board</td><td class="n">–</td><td>Only needed for servo motor mode, which a walking dog doesn't use.</td></tr>
