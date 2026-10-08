@@ -1,5 +1,9 @@
 # Architecture
 
+## Summary
+
+The Raspberry Pi 5 is the robot's high-level controller, running a single Python control loop at roughly 20–50 Hz. Each cycle it samples the MPU6050 over I²C for body attitude, times the HC-SR04 echo on GPIO for forward obstacle range, and polls the Hiwonder bus-servo controller over USB HID for joint positions and battery voltage. A behaviour state machine selects the current action (stand, walk, turn, scan, avoid, sit). The gait engine generates per-leg foot trajectories and phase timing, inverse kinematics converts them to hip and knee angles, and IMU feedback applies attitude corrections. The resulting targets are clamped to calibrated joint limits, converted to servo units (0–1000 ≈ 0–240°), and sent as one synchronized multi-servo move command. The controller relays each command over the half-duplex serial bus, and each LX-16A closes its own position loop. The Pi also handles safety (low-battery shutdown, unloading the servos on a fault) and provides SSH access over Wi-Fi for development.
+
 ## Who does what
 
 ```
