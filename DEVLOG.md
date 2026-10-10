@@ -178,6 +178,22 @@ Reconnected all five servos to the USB controller (servo 5 chained after servo 2
 
 ---
 
+## 2026-10-10 — Five-servo movement test (~48°)
+
+`tools/servo_check.py --ids 1-9`: each servo turned 200 units (~48°) over 1.5 s and back, one at a time.
+
+| Servo | Start | Target | Reached | Returned | Result |
+|---|---|---|---|---|---|
+| 1 | 443 | 643 | 642 | 443 | OK |
+| 2 | 462 | 662 | 662 | 462 | OK |
+| 3 | 208 | 408 | 407 | 209 | OK |
+| 4 | 329 | 529 | 527 | 329 | OK |
+| 5 | 499 | 699 | 697 | 499 | OK |
+
+All within 3 units (~0.7°). Battery 8.61–8.62 V.
+
+---
+
 ## Next
 
 1. UBEC install: measure 5 V output, wire into the terminal, set the Pi's power-supply setting, first run on battery only.
