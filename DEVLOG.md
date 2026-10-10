@@ -194,6 +194,22 @@ All within 3 units (~0.7°). Battery 8.61–8.62 V.
 
 ---
 
+## 2026-10-10 — Five-servo movement test (~120°)
+
+`tools/servo_check.py --ids 1-9 --step 500 --time 2000`: each servo turned 500 units (~120°, half its range) over 2 s and back.
+
+| Servo | Start | Target | Reached | Returned | Result |
+|---|---|---|---|---|---|
+| 1 | 443 | 943 | 943 | 442 | OK |
+| 2 | 462 | 962 | 962 | 460 | OK |
+| 3 | 208 | 708 | 706 | 208 | OK |
+| 4 | 329 | 829 | 829 | 328 | OK |
+| 5 | 499 | 999 | 999 | 499 | OK |
+
+All within 2 units (~0.5°) even at full-scale travel; no sag under load. Battery steady at 8.62 V.
+
+---
+
 ## Next
 
 1. UBEC install: measure 5 V output, wire into the terminal, set the Pi's power-supply setting, first run on battery only.
