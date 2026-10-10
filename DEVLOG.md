@@ -172,6 +172,12 @@ ID 5: position -1, 8.428 V, 35 C
 
 ---
 
+## 2026-10-10 — Five servos on the bus
+
+Reconnected all five servos to the USB controller (servo 5 chained after servo 2) with the Pi in charge. Read-only check: IDs 1–4 steady at 444 / 462 / 208 / 329, servo 2 answering again, so the clash is gone. Servo 5 read `[None, -2, None]`: the −1 ambiguity noted above, because it was parked just past its 0 end. Moving it to 500 over 2 s fixed it; it now reads 499 consistently. Battery 8.63 V.
+
+---
+
 ## Next
 
 1. UBEC install: measure 5 V output, wire into the terminal, set the Pi's power-supply setting, first run on battery only.
