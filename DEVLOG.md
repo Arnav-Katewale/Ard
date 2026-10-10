@@ -206,7 +206,7 @@ All within 3 units (~0.7°). Battery 8.61–8.62 V.
 | 4 | 329 | 829 | 829 | 328 | OK |
 | 5 | 499 | 999 | 999 | 499 | OK |
 
-All within 2 units (~0.5°) even at full-scale travel; no sag under load. Battery steady at 8.62 V.
+All within 2 units (~0.5°) at this large travel (servos unloaded). Battery steady at 8.62 V.
 
 ---
 
