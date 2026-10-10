@@ -14,7 +14,7 @@ Goals: stable walking, turning, obstacle avoidance, and later closed-loop balanc
 - [x] Raspberry Pi 5 set up (Raspberry Pi OS Lite 64-bit, SSH over Wi-Fi)
 - [x] Pi controls the servos over USB
 - [ ] Leg CAD design
-- [ ] Remaining five servos (IDs 5–9)
+- [ ] Remaining five servos (ID 5 set; 6–9 to go)
 - [ ] Sensors wired (HC-SR04, MPU6050)
 - [ ] Walking gait
 
@@ -46,7 +46,8 @@ Full wiring, Pi pin map and servo ID plan: open [`docs/wiring-map.html`](docs/wi
 ```
 robodog/servo.py         Controller class: move, read position, battery, go limp
 tools/servo_gui.py       Desktop test panel (Windows/macOS/Linux with a display)
-tools/servo_check.py     Health check: scan IDs, move each servo a little and verify
+tools/servo_check.py     Health check: scan IDs, move each servo ~48 degrees and back, verify
+tools/buslinker.py       Set servo IDs / read voltage & temperature through a BusLinker (one servo at a time)
 pi-setup/setup_usb.sh    One-time: lets non-root users open the servo controller on the Pi
 pi-setup/reset_pi_password.py  Reset the Pi password + add an SSH key via the SD card's cloud-init files
 docs/wiring-map.html     Wiring diagram, pin map, parts list

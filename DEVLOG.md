@@ -151,6 +151,27 @@ Battery 8.62–8.64 V. IDs 5–12: no response (the new servos aren't connected 
 
 ---
 
+## 2026-10-10 — First new servo: duplicate ID, set to 5 with the BusLinker
+
+**Problem:** with the first new servo daisy-chained after servo 2 (controller → servo 2 → new servo), servo 2 stopped answering and servo 3 briefly read servo 2's position (463 instead of 208). IDs 1, 3 and 4 otherwise stayed steady.
+**Cause:** the new servo shipped as **ID 2**, the same as old servo 2. Both replied to every ID-2 query and the replies collided on the bus.
+
+**Fix:** set the new servo's ID to **5** with a Hiwonder BusLinker (CH340 USB-serial, COM4, 115200 baud). Unlike the USB HID controller, the BusLinker passes the servos' own protocol straight through, including ID read/write (cmd 14/13), voltage (27), temperature (26) and position (28). New tool: `tools/buslinker.py` (`info`, `set-id N`). It refuses to continue unless exactly one servo answers consistently.
+
+```
+ID 2: position -1, 8.428 V, 35 C
+ID 2 -> 5: done
+ID 5: position -1, 8.428 V, 35 C
+```
+
+**Also:** `tools/servo_check.py` now moves each servo ~48° (200 units) by default so it is easy to see, and reads each ID three times, flagging readings that jump or drop out (duplicate ID or loose cable) instead of moving them.
+
+**Gotcha:** the HID controller reports "no answer" as position −1, but a servo can genuinely sit at −1 (just past its 0 end). Servo 5 is there now, so it may look missing on the controller until it's moved.
+
+**Procedure for the remaining new servos:** connect one at a time, alone, to the BusLinker → `python tools/buslinker.py set-id N` (6, 7, 8, 9) → label it.
+
+---
+
 ## Next
 
 1. UBEC install: measure 5 V output, wire into the terminal, set the Pi's power-supply setting, first run on battery only.
