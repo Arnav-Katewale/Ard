@@ -46,6 +46,7 @@ Full wiring, Pi pin map and servo ID plan: open [`docs/wiring-map.html`](docs/wi
 ```
 robodog/servo.py         Controller class: move, read position, battery, go limp
 tools/servo_gui.py       Desktop test panel (Windows/macOS/Linux with a display)
+tools/servo_check.py     Health check: scan IDs, move each servo a little and verify
 pi-setup/setup_usb.sh    One-time: lets non-root users open the servo controller on the Pi
 pi-setup/reset_pi_password.py  Reset the Pi password + add an SSH key via the SD card's cloud-init files
 docs/wiring-map.html     Wiring diagram, pin map, parts list
@@ -71,6 +72,7 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 sudo bash pi-setup/setup_usb.sh        # once; then replug the controller
 .venv/bin/python -m robodog.servo      # read-only check: battery + servo positions
+.venv/bin/python tools/servo_check.py  # move each servo ~12 degrees and back, verify
 ```
 
 ## Protocol notes

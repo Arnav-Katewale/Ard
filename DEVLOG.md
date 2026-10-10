@@ -134,6 +134,23 @@ Created this repo. The servo code was moved into `robodog/servo.py`; the desktop
 
 ---
 
+## 2026-10-10 — Servo health check
+
+**Done:** Re-tested all servos from the Pi and added `tools/servo_check.py`, a reusable health check. It scans IDs, then moves each servo 50 units (~12°) over 1 s and back, and verifies the position read-back.
+
+| Servo | Start | Target | Reached | Returned | Result |
+|---|---|---|---|---|---|
+| 1 | 443 | 493 | 491 | 443 | OK |
+| 2 | 462 | 512 | 510 | 462 | OK |
+| 3 | 207 | 257 | 255 | 208 | OK |
+| 4 | 328 | 378 | 375 | 329 | OK |
+
+Battery 8.62–8.64 V. IDs 5–12: no response (the new servos aren't connected yet).
+
+**Note:** right after boot, `arnavk-RPI5.local` may not resolve for the first minute or so even though the Pi is up and SSH works by IP. Wait a moment, or connect by IP.
+
+---
+
 ## Next
 
 1. UBEC install: measure 5 V output, wire into the terminal, set the Pi's power-supply setting, first run on battery only.
