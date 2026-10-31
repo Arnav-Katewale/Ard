@@ -184,3 +184,18 @@ rms_roll = 5.0           # deg
 peak_tilt = 12.0         # deg
 gyro_variance = 400.0    # (deg/s)^2
 accel_variance = 4.0     # (m/s^2)^2
+
+# Baseline open-loop trot. PLACEHOLDER values until gait experiments are run.
+[gait.base]
+stride_length_mm = 60.0
+step_height_mm = 25.0
+cycle_time_s = 0.8
+body_height_mm = 120.0
+duty_factor = 0.6
+
+# Trot: diagonal pairs move together, half a cycle apart.
+[gait.phase_offsets]
+FL = 0.0
+RR = 0.0
+FR = 0.5
+RL = 0.5
