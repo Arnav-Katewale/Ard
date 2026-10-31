@@ -261,3 +261,29 @@ rate_hz = 50.0                  # PLACEHOLDER: achievable rate on the Pi not yet
 ultrasonic_every_n_steps = 5    # 10 Hz ultrasonic at 50 Hz loop (>= 60 ms between pings)
 max_imu_failures = 5            # consecutive failed IMU reads before emergency stop
 max_consecutive_rejections = 10 # consecutive rejected joint commands before emergency stop
+
+# Software validation scenario (simulated sensor input, toy body model).
+# These values only define the simulated test; they are not robot measurements.
+[simulation]
+duration_s = 14.0
+seed = 42
+accel_noise_std = 0.05          # m/s^2
+gyro_noise_std = 0.15           # deg/s
+gyro_bias_dps = [1.2, -0.7, 0.3]
+mounting_pitch_deg = 1.5        # simulated IMU mounting error, removed by calibration
+mounting_roll_deg = -1.0
+ultrasonic_noise_cm = 0.8
+ultrasonic_dropout = 0.03
+response_time_s = 0.25          # toy model: how fast body follows commanded correction
+gait_sway_deg = 1.0             # toy model: body sway caused by stepping
+roll_disturbance_deg = 6.0      # e.g. standing across a side slope
+roll_disturbance_start_s = 2.0
+roll_disturbance_end_s = 7.0
+pitch_disturbance_deg = 4.0     # e.g. walking onto an incline
+pitch_disturbance_start_s = 4.0
+pitch_disturbance_end_s = 9.0
+obstacle_start_cm = 150.0
+obstacle_end_cm = 10.0
+obstacle_approach_start_s = 6.0
+obstacle_approach_end_s = 12.0
+calibration_samples = 300
