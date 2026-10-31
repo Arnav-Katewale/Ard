@@ -1,0 +1,5 @@
+# Extra packages needed only on the Raspberry Pi 5 for real hardware access.
+# Hardware integration is pending; these are imported lazily by the hardware backends.
+pyserial>=3.5   # LX-16A servo bus (USB or UART)
+lgpio>=0.2      # GPIO on Raspberry Pi 5 (RPi.GPIO does not support the Pi 5)
+smbus2>=0.4     # I2C for the IMU

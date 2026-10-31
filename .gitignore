@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+
+# Third-party Raspberry Pi 5 CAD reference (~130 MB).
+# Kept locally for mechanical layout, deliberately not tracked in Git.
+raspberry-pi-5 CAD File/
+
+# Generated run output
+data/runs/

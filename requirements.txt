@@ -1,0 +1,4 @@
+# Core RoboDog code uses only the Python standard library (Python >= 3.11 for tomllib).
+
+# Development / testing
+pytest>=8
