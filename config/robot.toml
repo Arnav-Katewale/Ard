@@ -19,3 +19,16 @@
 axis_map = ["+x", "+y", "+z"]
 max_accel_ms2 = 156.9     # +/-16 g; readings beyond this are treated as invalid
 max_gyro_dps = 2000.0     # +/-2000 deg/s full scale
+
+[ultrasonic]
+# Sensor model and supply voltage not yet confirmed (HC-SR04-style trigger/echo assumed).
+min_distance_cm = 2.0       # PLACEHOLDER: reliable range to be measured in calibration
+max_distance_cm = 300.0     # PLACEHOLDER
+timeout_s = 0.025
+min_interval_s = 0.06       # ~60 ms between pings so old echoes die out
+speed_of_sound_ms = 343.0   # dry air at ~20 C
+# Set to true ONLY after confirming the Echo signal at the Pi is <= 3.3 V.
+echo_voltage_safe = false
+gpio_chip = 0               # PLACEHOLDER: check with `gpioinfo` on the Pi 5
+trigger_pin = 23            # PLACEHOLDER (BCM numbering)
+echo_pin = 24               # PLACEHOLDER (BCM numbering)

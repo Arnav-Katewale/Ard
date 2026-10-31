@@ -69,3 +69,27 @@ class SimulatedImuBackend:
             for w, b in zip(ideal_gyro, self.gyro_bias)
         )
         return RawImuSample(accel=accel, gyro=gyro)
+
+
+class SimulatedEchoBackend:
+    """Returns echo times for a distance the caller sets, with optional noise and dropouts."""
+
+    def __init__(
+        self,
+        speed_of_sound_ms: float,
+        noise_std_cm: float = 0.0,
+        dropout_probability: float = 0.0,
+        seed: int = 0,
+    ):
+        self.speed_of_sound_ms = speed_of_sound_ms
+        self.noise_std_cm = noise_std_cm
+        self.dropout_probability = dropout_probability
+        self._rng = random.Random(seed)
+        self.distance_cm = 200.0
+
+    def measure_echo_s(self, timeout_s: float) -> float | None:
+        if self._rng.random() < self.dropout_probability:
+            return None
+        distance = self.distance_cm + self._rng.gauss(0.0, self.noise_std_cm)
+        echo_s = 2.0 * max(distance, 0.0) / 100.0 / self.speed_of_sound_ms
+        return echo_s if echo_s <= timeout_s else None
