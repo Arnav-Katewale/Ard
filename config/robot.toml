@@ -255,3 +255,9 @@ STABLE = 1.0
 MARGINAL = 0.8
 UNSTABLE = 0.5
 UNKNOWN = 0.7
+
+[control_loop]
+rate_hz = 50.0                  # PLACEHOLDER: achievable rate on the Pi not yet measured
+ultrasonic_every_n_steps = 5    # 10 Hz ultrasonic at 50 Hz loop (>= 60 ms between pings)
+max_imu_failures = 5            # consecutive failed IMU reads before emergency stop
+max_consecutive_rejections = 10 # consecutive rejected joint commands before emergency stop
