@@ -1,0 +1,13 @@
+# RoboDog configuration.
+#
+# Every tunable number lives here instead of in code.
+#
+# Values marked PLACEHOLDER have NOT been measured on the physical robot yet.
+# They are reasonable starting values so the software can be validated in
+# simulation; they must be replaced with measured values during hardware
+# integration.
+#
+# Coordinate convention (body frame):
+#   +x = forward, +y = left, +z = up
+#   roll  = rotation about +x, positive = left side up / right side down
+#   pitch = rotation about +y, positive = nose down   (right-hand rule)
