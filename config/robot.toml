@@ -13,28 +13,33 @@
 #   pitch = rotation about +y, positive = nose down   (right-hand rule)
 
 [imu]
-# Hardware driver pending: the IMU chip model has not been confirmed yet.
+# Project IMU: MPU6050 (GY-521) on I2C (GPIO2/3). Its driver for this
+# interface has not been written yet.
 # axis_map[i] = which signed sensor axis gives body axis x, y, z.
 # PLACEHOLDER until the physical mounting orientation is confirmed.
 axis_map = ["+x", "+y", "+z"]
-max_accel_ms2 = 156.9     # PLACEHOLDER: assumes +/-16 g full scale; depends on the IMU chip
-max_gyro_dps = 2000.0     # PLACEHOLDER: assumes +/-2000 deg/s full scale; depends on the IMU chip
+max_accel_ms2 = 156.9     # PLACEHOLDER: MPU6050's widest range (+/-16 g); the driver will set the range
+max_gyro_dps = 2000.0     # PLACEHOLDER: MPU6050's widest range (+/-2000 deg/s)
 
 [ultrasonic]
-# Sensor model and supply voltage not yet confirmed (HC-SR04-style trigger/echo assumed).
+# HC-SR04 (5 V). Its Echo reaches GPIO24 through a 1 kOhm / 2 kOhm divider,
+# per docs/wiring-map.html on the main branch. Not yet physically wired.
 min_distance_cm = 2.0       # PLACEHOLDER: reliable range to be measured in calibration
 max_distance_cm = 300.0     # PLACEHOLDER
 timeout_s = 0.025
 min_interval_s = 0.06       # ~60 ms between pings so old echoes die out
 speed_of_sound_ms = 343.0   # dry air at ~20 C
-# Set to true ONLY after confirming the Echo signal at the Pi is <= 3.3 V.
+# Set to true ONLY after measuring the wired divider output at the Pi: <= 3.3 V.
 echo_voltage_safe = false
 gpio_chip = 0               # PLACEHOLDER: check with `gpioinfo` on the Pi 5
-trigger_pin = 23            # PLACEHOLDER (BCM numbering)
-echo_pin = 24               # PLACEHOLDER (BCM numbering)
+trigger_pin = 23            # BCM numbering; matches the wiring map (physical pin 16)
+echo_pin = 24               # BCM numbering; matches the wiring map (physical pin 18)
 
 [servo_bus]
-device = "/dev/ttyUSB0"       # PLACEHOLDER: servo controller board not yet confirmed
+# This backend speaks LX-16A servo-level packets over serial (e.g. a BusLinker).
+# The robot itself uses the Hiwonder USB HID controller; an HID backend is a
+# planned integration step.
+device = "/dev/ttyUSB0"       # PLACEHOLDER
 echo = false                  # true only for Pi UART + half-duplex circuit wiring
 max_joint_speed_dps = 120.0   # conservative software speed limit
 min_move_time_ms = 20
@@ -44,8 +49,12 @@ min_move_time_ms = 20
 #   upper = hip pitch, 0 = leg pointing straight down, positive = foot forward
 #   knee  = knee bend, 0 = straight leg
 # servo angle = servo_neutral_deg + direction * joint angle
-# ALL ids, limits, neutrals and directions are PLACEHOLDER values until the
-# physical joint geometry is measured. Right legs are assumed mirrored (-1).
+# This 12-joint (3 per leg) software model predates reconciliation with the
+# physical robot, which has 2 servos per leg (hip, knee) plus a head servo:
+# FL 1/2, FR 3/4, RL 5/6, RR 7/8, head 9. Adapting to that is the next
+# integration step.
+# ALL ids, limits, neutrals and directions below are PLACEHOLDER values.
+# Right legs are assumed mirrored (-1).
 
 [[joints]]
 name = "FL_hip"
@@ -153,7 +162,8 @@ max_gyro_std_dps = 0.5
 max_accel_std_ms2 = 0.1
 
 [geometry]
-# PLACEHOLDER dimensions: the physical robot has not been measured yet.
+# PLACEHOLDER dimensions for the current 3-joint leg model; the physical legs
+# (2 joints each) have not been measured yet.
 body_length_mm = 200.0    # front-to-rear hip spacing
 body_width_mm = 110.0     # left-to-right hip spacing
 hip_offset_mm = 30.0      # sideways offset of the upper leg from the abduction axis

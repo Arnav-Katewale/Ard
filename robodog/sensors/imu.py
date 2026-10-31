@@ -5,9 +5,9 @@ That is correct when the robot is stationary and becomes noisy when it moves
 (walking adds acceleration on top of gravity). It is a basic estimate, not the
 final orientation estimator.
 
-The hardware backend for a specific IMU chip is pending until the chip model is
-confirmed. Anything with a `read_raw()` method returning RawImuSample works as a
-backend, which is how the simulated IMU plugs in.
+The project IMU is an MPU6050 (GY-521); its driver for this interface has not
+been written yet. Anything with a `read_raw()` method returning RawImuSample
+works as a backend, which is how the simulated IMU plugs in.
 """
 
 from __future__ import annotations

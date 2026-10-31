@@ -9,9 +9,14 @@ All servos share one half-duplex serial line (115200 baud). Every packet is:
 
 Positions are 0..1000 units covering 0..240 degrees (0.24 deg per unit).
 
-The serial port is passed in, so the same code talks to real hardware through
-pyserial or to SimulatedLx16aPort in software validation. Hardware validation
-of this driver is pending.
+The serial port is passed in, so the same code can talk to a serial link that
+passes these servo-level packets straight through (such as a Hiwonder
+BusLinker) through pyserial, or to SimulatedLx16aPort in software validation.
+Hardware validation of this driver is pending.
+
+The robot drives its servos through a Hiwonder USB HID controller,
+which uses its own command framing. Connecting the joint-safety layer to that
+controller needs a separate backend; that is a planned integration step.
 """
 
 from __future__ import annotations

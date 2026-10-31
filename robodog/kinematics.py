@@ -1,6 +1,10 @@
 """Leg geometry and 3-DOF leg kinematics.
 
-Each leg has three joints:
+Note: this is the current software model. The physical robot's legs have two
+servos each (hip and knee), so this module is to be adapted; step 2 below
+(the hip pitch / knee law-of-cosines solution) is the part that carries over.
+
+The software model gives each leg three joints:
     hip   - abduction: rotates the whole leg about the body x axis
     upper - hip pitch: 0 = upper leg pointing straight down, + = swings forward
     knee  - knee bend: 0 = straight leg, + = lower leg folds backward
