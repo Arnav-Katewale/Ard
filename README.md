@@ -1,54 +1,115 @@
 # RoboDog
 
-A quadruped robot dog built around a Raspberry Pi 5, an IMU, an ultrasonic distance
-sensor and LX-16A serial bus servos.
+A student engineering project by Arnav Katewale: a low-cost quadruped robot dog,
+controlled by a Raspberry Pi 5, that is designed to notice when its own walking becomes
+unstable and adjust how it walks in response.
 
-**Project question:** Can a low-cost quadruped robot recognize when its gait is unstable
-and change its own movement in real time using onboard sensors and Raspberry Pi 5
-computation?
+> **Engineering question:** Can a low-cost quadruped robot recognize when its gait is
+> unstable and change its own movement in real time using onboard sensors and
+> Raspberry Pi 5 computation?
 
-## Current status
+**Where it stands today:** the control software is written and tested, and the full
+sensing-to-servo control loop runs on **simulated** sensor input. It has **not yet run on
+the physical robot**. Hardware integration is the next milestone.
 
-| Area | Code implemented | Validated in software (simulated input) | Validated on hardware |
-|---|---|---|---|
-| IMU interface + basic pitch/roll | ✅ | ✅ | ⏳ pending (IMU chip not yet confirmed; hardware driver not written) |
-| Ultrasonic interface | ✅ incl. Pi 5 `lgpio` backend | ✅ | ⏳ pending (Echo voltage protection must be confirmed first) |
-| LX-16A servo protocol | ✅ | ✅ byte-exact packet tests | ⏳ pending |
-| Joint limits + emergency stop | ✅ | ✅ | ⏳ pending |
-| IMU calibration structure | ✅ | ✅ | ⏳ pending (no real calibration data yet) |
-| Leg kinematics (IK/FK) | ✅ | ✅ | ⏳ pending (geometry not measured) |
-| Stability metrics | ✅ | ✅ | ⏳ pending (reference values need walking data) |
-| Obstacle states | ✅ | ✅ | ⏳ pending |
-| Adaptive gait prototype | ✅ | ✅ | ⏳ pending |
-
-**No hardware test results exist yet.** Every number in `config/robot.toml` marked
-`PLACEHOLDER` is a starting value, not a measurement. Hardware integration testing is
-planned as a separate milestone.
-
-## Hardware
-
-| Component | Status |
+| | |
 |---|---|
-| Raspberry Pi 5 | Confirmed |
-| LewanSoul / Hiwonder LX-16A serial bus servos | Confirmed from the servo reference files; count and controller board to be confirmed (config assumes 12 servos, 3 per leg) |
-| IMU | Model to be confirmed |
-| Ultrasonic sensor | Model and supply voltage to be confirmed (HC-SR04-style trigger/echo assumed) |
-| Servo power / shared ground | To be confirmed |
+| **Hardware** | Raspberry Pi 5 · IMU (tilt and rotation) · ultrasonic distance sensor · LX-16A serial bus servos (12 planned, 3 per leg) |
+| **Software** | Python 3.11+, standard library only · 211 automated tests |
+| **Working today** | IMU → stability measurement → adaptive gait → inverse kinematics → safe servo commands, running against simulated sensors |
+| **Not yet shown** | Any result on physical hardware |
 
-Mechanical reference files:
-- `Lewansoul lx-16a BUS Servo CAD file/`: LX-16A servo models, tracked in this repository.
-- Raspberry Pi 5 CAD reference files are used locally for mechanical layout but are
-  **not included in the repository** (third-party material, ~130 MB).
+## Run it (no hardware needed)
 
-## Software architecture
+```bash
+python -m venv .venv
+.venv/Scripts/activate              # Windows  (Linux / macOS / Pi: source .venv/bin/activate)
+pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
+
+python -m pytest                    # 211 tests
+python tools/run_control_validation.py
+```
+
+The validation runner first calibrates a simulated IMU and prints a PASS/FAIL report.
+It then runs 14 seconds of simulated time: the body is tilted by scripted roll and pitch
+disturbances while a simulated obstacle approaches from 150 cm to 10 cm. Every second it
+prints the measured tilt, the obstacle state, the stability score, the current gait
+parameters, the body corrections and the joint angles sent to each leg. It ends with a
+summary (commands accepted or rejected, emergency stops, obstacle state changes). Add
+`--csv data/runs/validation.csv` to save every control step.
+
+## Project status
+
+### Implemented and validated in software
+
+"Validated in software" means unit tests with known inputs, plus an end-to-end run of the
+real control code against simulated sensors and a simulated servo bus.
+
+- **IMU interface:** timestamped acceleration and rotation readings, rejection of bad
+  readings, tilt (pitch/roll) from gravity
+- **IMU calibration:** gyro bias, mounting tilt and noise from stationary data, with a
+  PASS/FAIL validation report
+- **Ultrasonic interface:** time-of-flight distance, timeouts, range checks
+- **LX-16A servo protocol:** move, stop, torque, and read position/voltage/temperature,
+  checked byte-for-byte against the protocol
+- **Joint safety:** limits, all-or-nothing commands, speed limit, emergency stop
+- **Leg kinematics:** inverse and forward kinematics for a 3-joint leg
+- **Trot gait generator:** foot paths as a function of gait phase
+- **Stability metrics:** RMS tilt, peak tilt, rocking and vibration, combined score
+- **Obstacle states:** CLEAR / CAUTION / NEAR / STOP with hysteresis
+- **Adaptive gait prototype:** PID tilt correction plus stride, step height and speed
+  changes, all rate-limited
+- **Control loop:** wires everything together, with emergency-stop triggers
+
+### Implemented, waiting for hardware validation
+
+- Raspberry Pi 5 ultrasonic backend (`lgpio`), not yet run on a Pi
+- LX-16A communication over a real serial port
+- Calibration with real IMU data
+- Every value in `config/robot.toml` marked `PLACEHOLDER`: dimensions, joint limits,
+  servo IDs, PID gains and thresholds are starting values, not measurements
+
+### Not built yet
+
+- IMU chip driver (IMU model still being finalized)
+- Gyro + accelerometer filtering (complementary filter) for tilt while walking
+- Timing measurements of the control loop on the Pi 5
+- Logged experiments and plots
+- Fixed-gait vs adaptive-gait comparison on the real robot
+- Automated gait parameter search
+
+**No hardware test results exist yet**, and none are claimed here.
+
+## What's next
+
+1. **Hardware bring-up:** confirm the exact IMU, ultrasonic sensor and servo board; read
+   the real sensors; move one joint a few degrees in a direction confirmed safe from the
+   joint geometry, with the robot lifted.
+2. **Sensor calibration:** calibrate the real IMU; measure ultrasonic accuracy at known
+   distances.
+3. **Geometry:** measure the real leg dimensions and joint limits, and check the
+   kinematics on the robot.
+4. **Baseline walking:** open-loop trot with logged stability metrics.
+5. **The core experiment:** add gyro filtering, then compare fixed and adaptive gait on
+   the same tests and see whether adaptive control measurably reduces tilt.
+
+## How it works
 
 ```
- IMU ──► calibration ──► pitch/roll ──► stability metrics ──┐
-                                                             ├─► adaptive gait ──► trot gait ──► inverse    ──► joint safety ──► LX-16A
- ultrasonic ──► distance ──► obstacle state (hysteresis) ───┘    (PID + rate       generator     kinematics      layer             servo bus
-                                                                   limits)                                                          │
-       ▲                                                                                                                            │
-       └──────────────────────────────────── robot body moves, sensors measure the result ◄────────────────────────────────────────┘
+ IMU ─► calibration ─► pitch / roll ─► stability metrics ─┐
+                                                          ├─► adaptive gait
+ ultrasonic ─► distance ─► obstacle state ────────────────┘   (PID + rate limits)
+                                                                     │ gait parameters,
+                                                                     ▼ body corrections
+                                                             trot gait generator
+                                                                     │ foot positions
+                                                                     ▼
+                                                             inverse kinematics
+                                                                     │ joint angles
+                                                                     ▼
+                                                             joint safety layer ─► LX-16A servos
+                                                                                        │
+              sensors measure how the body actually moved  ◄────────────────────────────┘
 ```
 
 | Module | Responsibility |
@@ -69,14 +130,13 @@ Mechanical reference files:
 | `robodog/simulation.py` | Simulated sensor input and a toy body model for software validation |
 | `config/robot.toml` | Every tunable value (no magic numbers in code) |
 
-Hardware access is isolated behind small backend interfaces (`read_raw()`,
-`measure_echo_s()`, a serial port object), so the same control code runs against
-simulated backends now and real ones later.
+Hardware access sits behind small backend interfaces (`read_raw()`, `measure_echo_s()`,
+a serial port object). The same control code runs against simulated backends now and
+will run against real ones later.
 
-### Conventions
-
-Body frame: **+x forward, +y left, +z up**. Roll is rotation about +x (positive = left side
-up). Pitch is rotation about +y (positive = nose down, by the right-hand rule).
+**Conventions.** Body frame: +x forward, +y left, +z up. Roll is rotation about +x
+(positive = left side up). Pitch is rotation about +y (positive = nose down, by the
+right-hand rule).
 
 ## Key algorithms
 
@@ -93,9 +153,9 @@ from a tilted mounting; a multi-pose calibration is planned.
 
 **Inverse kinematics.** Hip abduction comes from the triangle formed by the hip offset
 and the leg's length when viewed from the front. Hip pitch and knee bend then come from
-the law of cosines on the upper/lower leg triangle. Unreachable positions raise an
-error instead of producing a bad angle. Forward kinematics is used in tests to confirm
-IK round-trips.
+the law of cosines on the upper/lower leg triangle. Unreachable positions raise an error
+instead of producing a bad angle. Forward kinematics is used in tests to confirm IK
+round-trips.
 
 **Trot gait.** Each leg cycles through stance (foot slides backward on the ground) and
 swing (foot lifts on a half-sine arc). Diagonal legs move together.
@@ -121,58 +181,49 @@ flicker. The sensor reports only one distance, so no obstacle shape is inferred.
 - Move time is stretched so no joint exceeds the configured speed.
 - Emergency stop (servo `MOVE_STOP`) is latched until explicitly reset. It is triggered
   by excessive tilt, loss of IMU data, or repeated rejected commands.
-- If IMU data is invalid, attitude corrections are disabled and ramp to zero instead
-  of being applied blindly.
+- If IMU data is invalid, attitude corrections are disabled and ramp to zero instead of
+  being applied blindly.
 - Every gait parameter change is rate-limited. Stride shrinks faster than it grows.
 - The ultrasonic hardware backend refuses to start until `echo_voltage_safe = true`
   confirms a 5 V Echo signal is divided down to ≤ 3.3 V for the Pi.
 - Before any physical servo testing: the robot lifted or the legs unloaded, small
   movements only, and the safe movement direction confirmed from the joint geometry.
 
-## Running
+## What the simulation shows, and what it does not
 
-Requires Python 3.11+. The core code uses only the standard library.
+The validation runner uses **simulated sensor input**: a seeded IMU with bias, noise and
+mounting error; scripted roll and pitch disturbances; a scripted obstacle approach; and a
+simulated LX-16A bus that decodes the real protocol bytes. It shows that the software
+behaves as designed: calibration removes the simulated bias, corrections oppose the
+disturbance, obstacle states progress with hysteresis, gait changes are smooth, and
+joint commands pass through the safety layer.
 
-```bash
-python -m venv .venv
-.venv/Scripts/activate              # Windows  (Linux / Pi: source .venv/bin/activate)
-pip install -r requirements.txt     # pytest
-python -m pytest                    # 211 tests, no hardware needed
-
-python tools/run_control_validation.py
-python tools/run_control_validation.py --every 0.5 --csv data/runs/validation.csv
-```
-
-On the Raspberry Pi: `pip install -r requirements-pi.txt` (pyserial, lgpio, smbus2).
-
-### What the validation runner shows, and what it does not
-
-`run_control_validation.py` runs the real control code against **simulated sensor
-input**: a seeded IMU with bias, noise and mounting error; a scripted roll and pitch
-disturbance; an obstacle approaching from 150 cm to 10 cm; and a simulated LX-16A bus
-that decodes the real protocol bytes. It shows that the software pipeline behaves as
-designed: calibration removes the simulated bias, corrections oppose the disturbance,
-obstacle states progress with hysteresis, gait changes are smooth, and all joint
-commands pass the safety layer.
-
-The body response comes from a **deliberately simple toy model**, not robot physics.
+The body's response comes from a **deliberately simple toy model**, not robot physics.
 The run therefore says nothing about whether adaptive control improves stability on the
-real robot. That question can only be answered by hardware experiments comparing fixed
-and adaptive gait.
+real robot. Only hardware experiments comparing fixed and adaptive gait can answer that.
+
+## Hardware notes
+
+| Component | Status |
+|---|---|
+| Raspberry Pi 5 | Main computer |
+| LX-16A serial bus servos | Servo model the design is based on (reference CAD included); servo count and controller board still to be finalized |
+| IMU | Model still to be finalized; chip-specific driver not yet written |
+| Ultrasonic sensor | HC-SR04-style trigger/echo assumed; model and supply voltage still to be finalized |
+| Servo power and grounding | Still to be finalized |
+
+On the Raspberry Pi, install `pip install -r requirements-pi.txt` (pyserial, lgpio,
+smbus2).
+
+Mechanical reference files:
+- `Lewansoul lx-16a BUS Servo CAD file/`: LX-16A servo models, tracked in this repository.
+- Raspberry Pi 5 CAD reference files are used locally for mechanical layout but are
+  **not included in the repository** (third-party material, ~130 MB).
 
 ## Limitations
 
 - No hardware validation yet; all dimensions, limits, gains and thresholds are placeholders.
 - Pitch/roll are accelerometer-only and will be noisy during walking.
-- The control loop is single-threaded; timing and jitter on the Pi 5 have not been
+- The control loop is single-threaded. Its timing and jitter on the Pi 5 have not been
   measured, and no real-time guarantees are claimed.
 - The simulation is a toy model used to exercise code paths, not to predict performance.
-
-## Next steps
-
-1. Hardware bring-up: confirm the IMU, ultrasonic sensor and servo board; read real
-   sensors; move one joint a few degrees in a confirmed safe direction.
-2. Sensor calibration with real data, plus ultrasonic accuracy at known distances.
-3. Measure the real geometry and joint limits; validate IK on the robot.
-4. Open-loop walking with logged stability metrics.
-5. Complementary filter, then fixed-vs-adaptive gait experiments on hardware.
