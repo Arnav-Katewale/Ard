@@ -151,3 +151,11 @@ max_gyro_mean_dps = 0.2
 max_level_error_deg = 0.5
 max_gyro_std_dps = 0.5
 max_accel_std_ms2 = 0.1
+
+[geometry]
+# PLACEHOLDER dimensions: the physical robot has not been measured yet.
+body_length_mm = 200.0    # front-to-rear hip spacing
+body_width_mm = 110.0     # left-to-right hip spacing
+hip_offset_mm = 30.0      # sideways offset of the upper leg from the abduction axis
+upper_leg_mm = 80.0
+lower_leg_mm = 80.0
