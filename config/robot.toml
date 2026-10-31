@@ -32,3 +32,113 @@ echo_voltage_safe = false
 gpio_chip = 0               # PLACEHOLDER: check with `gpioinfo` on the Pi 5
 trigger_pin = 23            # PLACEHOLDER (BCM numbering)
 echo_pin = 24               # PLACEHOLDER (BCM numbering)
+
+[servo_bus]
+device = "/dev/ttyUSB0"       # PLACEHOLDER: servo controller board not yet confirmed
+echo = false                  # true only for Pi UART + half-duplex circuit wiring
+max_joint_speed_dps = 120.0   # conservative software speed limit
+min_move_time_ms = 20
+
+# Joints. Angles are joint angles (see robodog/servos/joint.py):
+#   hip   = abduction, rotation of the whole leg about the body x axis
+#   upper = hip pitch, 0 = leg pointing straight down, positive = foot forward
+#   knee  = knee bend, 0 = straight leg
+# servo angle = servo_neutral_deg + direction * joint angle
+# ALL ids, limits, neutrals and directions are PLACEHOLDER values until the
+# physical joint geometry is measured. Right legs are assumed mirrored (-1).
+
+[[joints]]
+name = "FL_hip"
+servo_id = 1
+min_deg = -25.0
+max_deg = 25.0
+servo_neutral_deg = 120.0
+direction = 1
+
+[[joints]]
+name = "FL_upper"
+servo_id = 2
+min_deg = -60.0
+max_deg = 80.0
+servo_neutral_deg = 120.0
+direction = 1
+
+[[joints]]
+name = "FL_knee"
+servo_id = 3
+min_deg = 20.0
+max_deg = 140.0
+servo_neutral_deg = 60.0
+direction = 1
+
+[[joints]]
+name = "FR_hip"
+servo_id = 4
+min_deg = -25.0
+max_deg = 25.0
+servo_neutral_deg = 120.0
+direction = -1
+
+[[joints]]
+name = "FR_upper"
+servo_id = 5
+min_deg = -60.0
+max_deg = 80.0
+servo_neutral_deg = 120.0
+direction = -1
+
+[[joints]]
+name = "FR_knee"
+servo_id = 6
+min_deg = 20.0
+max_deg = 140.0
+servo_neutral_deg = 180.0
+direction = -1
+
+[[joints]]
+name = "RL_hip"
+servo_id = 7
+min_deg = -25.0
+max_deg = 25.0
+servo_neutral_deg = 120.0
+direction = 1
+
+[[joints]]
+name = "RL_upper"
+servo_id = 8
+min_deg = -60.0
+max_deg = 80.0
+servo_neutral_deg = 120.0
+direction = 1
+
+[[joints]]
+name = "RL_knee"
+servo_id = 9
+min_deg = 20.0
+max_deg = 140.0
+servo_neutral_deg = 60.0
+direction = 1
+
+[[joints]]
+name = "RR_hip"
+servo_id = 10
+min_deg = -25.0
+max_deg = 25.0
+servo_neutral_deg = 120.0
+direction = -1
+
+[[joints]]
+name = "RR_upper"
+servo_id = 11
+min_deg = -60.0
+max_deg = 80.0
+servo_neutral_deg = 120.0
+direction = -1
+
+[[joints]]
+name = "RR_knee"
+servo_id = 12
+min_deg = 20.0
+max_deg = 140.0
+servo_neutral_deg = 180.0
+direction = -1
