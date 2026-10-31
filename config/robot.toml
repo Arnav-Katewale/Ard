@@ -207,3 +207,51 @@ near_cm = 30.0
 stop_cm = 15.0
 hysteresis_cm = 5.0
 max_invalid_readings = 5   # consecutive missed echoes before distance is "unknown"
+
+# Adaptive gait prototype. Gains and limits are conservative PLACEHOLDER
+# starting points, validated only in simulation so far.
+[adaptive]
+max_correction_rate_dps = 20.0    # body correction may change at most this fast
+stride_rate_up_mm_s = 40.0        # lengthen stride slowly
+stride_rate_down_mm_s = 150.0     # shorten stride quickly (safe direction)
+step_height_rate_mm_s = 40.0
+cycle_time_rate_s_per_s = 0.5
+max_stride_mm = 80.0
+max_step_height_mm = 40.0
+min_cycle_time_s = 0.6
+max_cycle_time_s = 1.5
+
+[adaptive.roll_pid]
+kp = 0.6
+ki = 0.8
+kd = 0.02
+output_limit = 8.0        # deg, maximum body roll correction
+integral_limit = 10.0
+
+[adaptive.pitch_pid]
+kp = 0.6
+ki = 0.8
+kd = 0.02
+output_limit = 8.0        # deg, maximum body pitch correction
+integral_limit = 10.0
+
+[adaptive.obstacle_stride_scale]
+CLEAR = 1.0
+CAUTION = 0.7
+NEAR = 0.4
+
+[adaptive.obstacle_step_height_add_mm]
+CLEAR = 0.0
+CAUTION = 0.0
+NEAR = 8.0
+
+[adaptive.obstacle_cycle_time_scale]
+CLEAR = 1.0
+CAUTION = 1.0
+NEAR = 1.25
+
+[adaptive.stability_stride_scale]
+STABLE = 1.0
+MARGINAL = 0.8
+UNSTABLE = 0.5
+UNKNOWN = 0.7
