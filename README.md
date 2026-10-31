@@ -21,11 +21,22 @@ the physical robot**. Hardware integration is the next milestone.
 
 ## Run it (no hardware needed)
 
-```bash
-python -m venv .venv
-.venv/Scripts/activate              # Windows  (Linux / macOS / Pi: source .venv/bin/activate)
-pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
+Create and activate a virtual environment (Python 3.11 or newer):
 
+```bash
+# Windows (PowerShell)
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+
+# macOS / Linux / Raspberry Pi
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Then, in the activated environment:
+
+```bash
+pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
 python -m pytest                    # 211 tests
 python tools/run_control_validation.py
 ```
@@ -33,50 +44,62 @@ python tools/run_control_validation.py
 The validation runner first calibrates a simulated IMU and prints a PASS/FAIL report.
 It then runs 14 seconds of simulated time: the body is tilted by scripted roll and pitch
 disturbances while a simulated obstacle approaches from 150 cm to 10 cm. Every second it
-prints the measured tilt, the obstacle state, the stability score, the current gait
-parameters, the body corrections and the joint angles sent to each leg. It ends with a
-summary (commands accepted or rejected, emergency stops, obstacle state changes). Add
-`--csv data/runs/validation.csv` to save every control step.
+prints the tilt reported by the simulated IMU, the obstacle state, the stability score,
+the current gait parameters, the body corrections and the joint angles sent to each leg.
+It ends with a summary (commands accepted or rejected, emergency stops, obstacle state
+changes). Add `--csv data/runs/validation.csv` to save every control step.
 
 ## Project status
 
 ### Implemented and validated in software
 
-"Validated in software" means unit tests with known inputs, plus an end-to-end run of the
-real control code against simulated sensors and a simulated servo bus.
+"Validated in software" means only this: exercised by automated tests with known inputs,
+and by an end-to-end run of the control code against simulated sensors and a simulated
+servo bus. None of it has been run on the physical robot.
 
 - **IMU interface:** timestamped acceleration and rotation readings, rejection of bad
-  readings, tilt (pitch/roll) from gravity
-- **IMU calibration:** gyro bias, mounting tilt and noise from stationary data, with a
-  PASS/FAIL validation report
+  readings, accelerometer-based pitch/roll
 - **Ultrasonic interface:** time-of-flight distance, timeouts, range checks
-- **LX-16A servo protocol:** move, stop, torque, and read position/voltage/temperature,
-  checked byte-for-byte against the protocol
-- **Joint safety:** limits, all-or-nothing commands, speed limit, emergency stop
+- **LX-16A servo protocol:** packet encoding and parsing for move, stop, torque and
+  position/voltage/temperature reads, checked byte-for-byte against the protocol
+- **Joint safety:** limits, all-or-nothing commands, speed limit, emergency-stop logic
+- **IMU calibration algorithms:** gyro bias, mounting tilt and noise from stationary
+  data, with a PASS/FAIL validation report (validated on simulated data only)
 - **Leg kinematics:** inverse and forward kinematics for a 3-joint leg
 - **Trot gait generator:** foot paths as a function of gait phase
 - **Stability metrics:** RMS tilt, peak tilt, rocking and vibration, combined score
-- **Obstacle states:** CLEAR / CAUTION / NEAR / STOP with hysteresis
-- **Adaptive gait prototype:** PID tilt correction plus stride, step height and speed
+- **Obstacle-state logic:** CLEAR / CAUTION / NEAR / STOP with hysteresis
+- **PID controller:** output limits and anti-windup
+- **Adaptive gait controller:** PID tilt correction plus stride, step height and speed
   changes, all rate-limited
-- **Control loop:** wires everything together, with emergency-stop triggers
+- **Closed-loop control flow:** wires everything together, with emergency-stop triggers
+- **Simulation-based validation:** `tools/run_control_validation.py`
+- **Automated tests:** 211 tests, no hardware needed
 
-### Implemented, waiting for hardware validation
+### Hardware-facing implementation complete; physical validation pending
 
-- Raspberry Pi 5 ultrasonic backend (`lgpio`), not yet run on a Pi
-- LX-16A communication over a real serial port
-- Calibration with real IMU data
-- Every value in `config/robot.toml` marked `PLACEHOLDER`: dimensions, joint limits,
-  servo IDs, PID gains and thresholds are starting values, not measurements
+This code exists but has not yet been run against the actual robot.
 
-### Not built yet
+- **Raspberry Pi 5 ultrasonic backend** (`lgpio`) implemented; physical wiring and
+  sensor validation pending
+- **LX-16A serial communication backend** implemented (written to use a serial port
+  through pyserial); physical servo communication validation pending
+- **IMU calibration routine** works with any IMU backend; physical IMU calibration
+  pending, and it first needs the IMU chip driver below
+- **Physical configuration values:** every value in `config/robot.toml` marked
+  `PLACEHOLDER` (dimensions, joint limits, servo IDs, pins, PID gains, thresholds) is a
+  starting value, not a measurement
 
-- IMU chip driver (IMU model still being finalized)
-- Gyro + accelerometer filtering (complementary filter) for tilt while walking
-- Timing measurements of the control loop on the Pi 5
-- Logged experiments and plots
-- Fixed-gait vs adaptive-gait comparison on the real robot
-- Automated gait parameter search
+### Not built or measured yet
+
+- Exact IMU chip driver (IMU model still being finalized)
+- Ultrasonic calibration against known distances
+- Gyro-based orientation filtering / sensor fusion (e.g. complementary filter)
+- Raspberry Pi 5 control-loop timing and latency measurements
+- Physical walking gait tuning
+- Logged hardware experiments and plots
+- Fixed-gait vs adaptive-gait comparison on the physical robot
+- Automated gait parameter optimization
 
 **No hardware test results exist yet**, and none are claimed here.
 
@@ -193,10 +216,10 @@ flicker. The sensor reports only one distance, so no obstacle shape is inferred.
 
 The validation runner uses **simulated sensor input**: a seeded IMU with bias, noise and
 mounting error; scripted roll and pitch disturbances; a scripted obstacle approach; and a
-simulated LX-16A bus that decodes the real protocol bytes. It shows that the software
-behaves as designed: calibration removes the simulated bias, corrections oppose the
-disturbance, obstacle states progress with hysteresis, gait changes are smooth, and
-joint commands pass through the safety layer.
+simulated LX-16A bus that decodes the same protocol bytes the servos use. It shows that
+the software behaves as designed: calibration removes the simulated bias, corrections
+oppose the disturbance, obstacle states progress with hysteresis, gait changes are
+smooth, and joint commands pass through the safety layer.
 
 The body's response comes from a **deliberately simple toy model**, not robot physics.
 The run therefore says nothing about whether adaptive control improves stability on the

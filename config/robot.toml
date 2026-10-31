@@ -17,8 +17,8 @@
 # axis_map[i] = which signed sensor axis gives body axis x, y, z.
 # PLACEHOLDER until the physical mounting orientation is confirmed.
 axis_map = ["+x", "+y", "+z"]
-max_accel_ms2 = 156.9     # +/-16 g; readings beyond this are treated as invalid
-max_gyro_dps = 2000.0     # +/-2000 deg/s full scale
+max_accel_ms2 = 156.9     # PLACEHOLDER: assumes +/-16 g full scale; depends on the IMU chip
+max_gyro_dps = 2000.0     # PLACEHOLDER: assumes +/-2000 deg/s full scale; depends on the IMU chip
 
 [ultrasonic]
 # Sensor model and supply voltage not yet confirmed (HC-SR04-style trigger/echo assumed).
