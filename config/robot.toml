@@ -142,3 +142,12 @@ min_deg = 20.0
 max_deg = 140.0
 servo_neutral_deg = 180.0
 direction = -1
+
+[calibration]
+# Stationary IMU calibration acceptance thresholds.
+# PLACEHOLDER: to be set from measured sensor noise during sensor calibration.
+min_samples = 200
+max_gyro_mean_dps = 0.2
+max_level_error_deg = 0.5
+max_gyro_std_dps = 0.5
+max_accel_std_ms2 = 0.1

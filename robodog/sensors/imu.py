@@ -104,6 +104,9 @@ class Imu:
 
     read() never raises because of a bad sample; it returns a reading whose
     status explains the problem, so higher-level code can decide what to do.
+
+    `calibration` (optional) is an ImuCalibration from robodog.calibration;
+    when set, its offsets are removed from every valid reading.
     """
 
     def __init__(
@@ -111,10 +114,12 @@ class Imu:
         backend: ImuBackend,
         config: ImuConfig,
         clock: Callable[[], float] = time.monotonic,
+        calibration=None,
     ):
         self._backend = backend
         self._config = config
         self._clock = clock
+        self.calibration = calibration
         self.consecutive_failures = 0
 
     def read(self) -> ImuReading:
@@ -131,7 +136,11 @@ class Imu:
             return self._failed(timestamp, SensorStatus.INVALID)
 
         self.consecutive_failures = 0
+        if self.calibration is not None:
+            accel, gyro = self.calibration.correct(accel, gyro)
         pitch, roll = accel_pitch_roll(*accel)
+        if self.calibration is not None:
+            pitch, roll = self.calibration.correct_angles(pitch, roll)
         return ImuReading(*accel, *gyro, pitch, roll, timestamp, SensorStatus.OK)
 
     def _plausible(self, accel, gyro) -> bool:
