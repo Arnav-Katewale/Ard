@@ -11,3 +11,11 @@
 #   +x = forward, +y = left, +z = up
 #   roll  = rotation about +x, positive = left side up / right side down
 #   pitch = rotation about +y, positive = nose down   (right-hand rule)
+
+[imu]
+# Hardware driver pending: the IMU chip model has not been confirmed yet.
+# axis_map[i] = which signed sensor axis gives body axis x, y, z.
+# PLACEHOLDER until the physical mounting orientation is confirmed.
+axis_map = ["+x", "+y", "+z"]
+max_accel_ms2 = 156.9     # +/-16 g; readings beyond this are treated as invalid
+max_gyro_dps = 2000.0     # +/-2000 deg/s full scale
