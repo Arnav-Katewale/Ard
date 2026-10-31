@@ -199,3 +199,11 @@ FL = 0.0
 RR = 0.0
 FR = 0.5
 RL = 0.5
+
+[obstacle]
+# PLACEHOLDER thresholds; to be revisited once the sensor's reliable range is measured.
+caution_cm = 80.0
+near_cm = 30.0
+stop_cm = 15.0
+hysteresis_cm = 5.0
+max_invalid_readings = 5   # consecutive missed echoes before distance is "unknown"
