@@ -1,10 +1,11 @@
-"""Leg geometry and 3-DOF leg kinematics.
+"""Leg geometry and leg kinematics: 3-DOF model and the physical 2-DOF leg.
 
-Note: this is the current software model. The physical robot's legs have two
-servos each (hip and knee), so this module is to be adapted; step 2 below
-(the hip pitch / knee law-of-cosines solution) is the part that carries over.
+The physical robot's legs have two servos each (hip and knee): leg_ik_2dof /
+leg_fk_2dof. They use the same law-of-cosines solution as step 2 below.
+The gait and joint configuration still use the 3-DOF model; switching them
+over is a separate step.
 
-The software model gives each leg three joints:
+The 3-DOF software model gives each leg three joints:
     hip   - abduction: rotates the whole leg about the body x axis
     upper - hip pitch: 0 = upper leg pointing straight down, + = swings forward
     knee  - knee bend: 0 = straight leg, + = lower leg folds backward
@@ -22,6 +23,10 @@ Inverse kinematics, step by step:
    The law of cosines on the upper/lower leg triangle gives
        knee  = 180 deg - acos((L2^2 + L3^2 - d^2) / (2 L2 L3))
        upper = atan2(x, r) + acos((L2^2 + d^2 - L3^2) / (2 L2 d))
+
+2-DOF leg (hip + knee, no abduction): the leg moves only in the x-z plane, so
+step 1 disappears. The foot is at (x, z) with r = -z (depth below the hip),
+and step 2 gives hip (pitch) and knee directly. hip_offset_mm is not used.
 """
 
 from __future__ import annotations
@@ -68,15 +73,46 @@ def leg_ik(x: float, y: float, z: float, side: int, g: LegGeometry) -> tuple[flo
     hip = math.atan2(z, y) - math.atan2(-r, side * L1)
     hip = math.atan2(math.sin(hip), math.cos(hip))  # wrap to (-pi, pi]
 
+    try:
+        upper, knee = _planar_ik(x, r, L2, L3)
+    except UnreachableError as exc:
+        raise UnreachableError(f"foot ({x:.1f}, {y:.1f}, {z:.1f}) {exc}") from exc
+    return math.degrees(hip), math.degrees(upper), math.degrees(knee)
+
+
+def _planar_ik(x: float, r: float, L2: float, L3: float) -> tuple[float, float]:
+    """Foot at (x forward, r below the hip) in the leg plane -> (pitch, knee) in radians."""
     d = math.hypot(x, r)
     if not abs(L2 - L3) < d <= L2 + L3:
-        raise UnreachableError(f"foot ({x:.1f}, {y:.1f}, {z:.1f}) is {d:.1f} mm from the hip, "
+        raise UnreachableError(f"is {d:.1f} mm from the hip, "
                                f"reachable range is ({abs(L2 - L3):.1f}, {L2 + L3:.1f}]")
     cos_knee = (L2 * L2 + L3 * L3 - d * d) / (2 * L2 * L3)
     cos_alpha = (L2 * L2 + d * d - L3 * L3) / (2 * L2 * d)
     knee = math.pi - math.acos(max(-1.0, min(1.0, cos_knee)))
-    upper = math.atan2(x, r) + math.acos(max(-1.0, min(1.0, cos_alpha)))
-    return math.degrees(hip), math.degrees(upper), math.degrees(knee)
+    pitch = math.atan2(x, r) + math.acos(max(-1.0, min(1.0, cos_alpha)))
+    return pitch, knee
+
+
+def leg_ik_2dof(x: float, z: float, g: LegGeometry) -> tuple[float, float]:
+    """Foot position (x, z) in the 2-DOF leg plane (mm) -> (hip, knee) in degrees.
+
+    hip  - hip pitch: 0 = leg pointing straight down, + = foot swings forward
+    knee - knee bend: 0 = straight leg, + = lower leg folds backward
+    """
+    try:
+        hip, knee = _planar_ik(x, -z, g.upper_leg_mm, g.lower_leg_mm)
+    except UnreachableError as exc:
+        raise UnreachableError(f"foot ({x:.1f}, {z:.1f}) {exc}") from exc
+    return math.degrees(hip), math.degrees(knee)
+
+
+def leg_fk_2dof(hip_deg: float, knee_deg: float, g: LegGeometry) -> tuple[float, float]:
+    """2-DOF joint angles (degrees) -> foot position (x, z) in the leg plane (mm)."""
+    h, k = math.radians(hip_deg), math.radians(knee_deg)
+    L2, L3 = g.upper_leg_mm, g.lower_leg_mm
+    x = L2 * math.sin(h) + L3 * math.sin(h - k)
+    z = -(L2 * math.cos(h) + L3 * math.cos(h - k))
+    return x, z
 
 
 def leg_fk(hip_deg: float, upper_deg: float, knee_deg: float, side: int, g: LegGeometry) -> tuple[float, float, float]:

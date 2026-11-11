@@ -20,15 +20,15 @@ You are looking at the **`adaptive-control-software` branch**. The project so fa
    measurement, PID tilt correction, obstacle response and adaptive gait. It is
    written, tested and validated in simulation, but it **has not yet been integrated
    with the physical robot**.
-3. **Next integration step.** Adapt this software's leg model to the robot's real
-   2-servo-per-leg geometry, and connect it to the existing USB HID servo interface from
+3. **Next integration step.** Switch this software's gait to the 2-joint leg
+   kinematics (now written and tested), and connect it to the existing USB HID servo interface from
    `main`.
 
 | | |
 |---|---|
 | **Robot hardware** | Raspberry Pi 5 · 9 LX-16A bus servos (hip + knee on each of 4 legs, plus a head servo) · Hiwonder USB HID servo controller · MPU6050 (GY-521) IMU · HC-SR04 ultrasonic sensor |
 | **Physically tested so far** (on `main`) | Pi-to-servo control over USB HID, measured servo movement tests, servo ID setup |
-| **This branch** | Python 3.11+, standard library only · 211 automated tests · full control loop validated on simulated sensor input |
+| **This branch** | Python 3.11+, standard library only · 240 automated tests · full control loop validated on simulated sensor input |
 | **Not yet done** | Running this branch's adaptive control on the physical robot |
 
 ## Run it (no hardware needed)
@@ -49,7 +49,7 @@ Then, in the activated environment:
 
 ```bash
 pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
-python -m pytest                    # 211 tests
+python -m pytest                    # 240 tests
 python tools/run_control_validation.py
 ```
 
@@ -70,9 +70,9 @@ Bringing the two together is the next integration step:
 
 | Part of this branch | Software model today | Physical robot | Integration work |
 |---|---|---|---|
-| Leg kinematics (`robodog/kinematics.py`) | 3 joints per leg (hip abduction, hip pitch, knee) | 2 servos per leg (hip, knee) | Derive 2-joint IK for the real leg; the hip pitch / knee part of the current law-of-cosines solution carries over |
+| Leg kinematics (`robodog/kinematics.py`) | 3 joints per leg (hip abduction, hip pitch, knee); 2-joint IK/FK now added alongside | 2 servos per leg (hip, knee) | Switch the gait and joint configuration from the 3-joint model to the 2-joint functions |
 | Joint configuration (`config/robot.toml`) | 12 leg joints | 8 leg servos + 1 head servo | Use the real servo IDs (FL 1/2, FR 3/4, RL 5/6, RR 7/8, head 9) and measured limits |
-| Roll correction | Per-leg height changes | Still possible with hip + knee | Re-check the correction range once the 2-joint IK exists |
+| Roll correction | Per-leg height changes | Still possible with hip + knee | Re-check the correction range once the gait uses the 2-joint IK |
 | Servo communication (`robodog/servos/lx16a.py`) | LX-16A servo-level serial packets (the protocol a BusLinker passes straight through) | The robot uses the Hiwonder **USB HID** controller, which has its own command framing | Add a backend that drives the existing HID `Controller` from `main`, behind the same joint-safety layer |
 | Emergency stop | Servo `MOVE_STOP` command | HID controller offers position and unload commands | Map the stop behaviour onto the HID controller's commands |
 
@@ -109,8 +109,9 @@ servo bus. None of this branch's code has been run on the physical robot.
 - **Joint safety:** limits, all-or-nothing commands, speed limit, emergency-stop logic
 - **IMU calibration algorithms:** gyro bias, mounting tilt and noise from stationary
   data, with a PASS/FAIL validation report (validated on simulated data only)
-- **Leg kinematics:** inverse and forward kinematics for a 3-joint leg (see the table
-  above)
+- **Leg kinematics:** inverse and forward kinematics for the 3-joint software model and
+  for the physical 2-joint (hip + knee) leg; the gait still uses the 3-joint model (see
+  the table above)
 - **Trot gait generator:** foot paths as a function of gait phase
 - **Stability metrics:** RMS tilt, peak tilt, rocking and vibration, combined score
 - **Obstacle-state logic:** CLEAR / CAUTION / NEAR / STOP with hysteresis
@@ -119,7 +120,7 @@ servo bus. None of this branch's code has been run on the physical robot.
   changes, all rate-limited
 - **Closed-loop control flow:** wires everything together, with emergency-stop triggers
 - **Simulation-based validation:** `tools/run_control_validation.py`
-- **Automated tests:** 211 tests, no hardware needed
+- **Automated tests:** 240 tests, no hardware needed
 
 ### Hardware-facing code in this branch; physical validation pending
 
@@ -137,7 +138,7 @@ servo bus. None of this branch's code has been run on the physical robot.
 ### Not built or measured yet
 
 - MPU6050 driver for this branch's IMU interface
-- 2-joint leg kinematics for the physical leg geometry
+- Gait and joint configuration using the 2-joint leg kinematics
 - Servo backend connecting this branch to the existing USB HID controller code
 - Ultrasonic calibration against known distances
 - Gyro-based orientation filtering / sensor fusion (e.g. complementary filter)
@@ -152,7 +153,7 @@ adds no hardware results and claims none.
 
 ## What's next
 
-1. **Integrate with the real robot:** 2-joint leg kinematics, the real servo IDs, an
+1. **Integrate with the real robot:** switch the gait to the 2-joint kinematics, the real servo IDs, an
    HID servo backend behind the joint-safety layer, and an MPU6050 driver.
 2. **Sensor bring-up and calibration:** wire the MPU6050 and HC-SR04, calibrate the IMU
    on the robot, and measure ultrasonic accuracy at known distances.
@@ -188,7 +189,7 @@ adds no hardware results and claims none.
 | `robodog/servos/lx16a.py` | LX-16A servo-level serial protocol: move, stop, torque, read position/voltage/temperature |
 | `robodog/servos/joint.py` | Joint limits, all-or-nothing commands, speed limit, latched emergency stop |
 | `robodog/calibration/calibration.py` | Stationary IMU calibration, JSON save/load, PASS/FAIL validation report |
-| `robodog/kinematics.py` | 3-joint leg forward and inverse kinematics (to be adapted to the 2-joint leg) |
+| `robodog/kinematics.py` | Leg forward and inverse kinematics: 3-joint model and the physical 2-joint leg |
 | `robodog/control/stability.py` | Sliding-window stability metrics and composite score |
 | `robodog/control/obstacle.py` | CLEAR / CAUTION / NEAR / STOP with hysteresis |
 | `robodog/control/pid.py` | PID with output limits and anti-windup |
@@ -223,7 +224,8 @@ from a tilted mounting; a multi-pose calibration is planned.
 **Inverse kinematics (current 3-joint model).** Hip abduction comes from the triangle
 formed by the hip offset and the leg's length when viewed from the front. Hip pitch and
 knee bend then come from the law of cosines on the upper/lower leg triangle. That second
-step is exactly the 2-joint problem the physical leg needs. Unreachable positions raise
+step is exactly the 2-joint problem the physical leg needs, and `leg_ik_2dof` reuses it
+directly (shared helper `_planar_ik`). Unreachable positions raise
 an error instead of producing a bad angle. Forward kinematics is used in tests to
 confirm IK round-trips.
 
@@ -300,7 +302,7 @@ Mechanical reference files:
 
 - This branch's control software has not been run on the physical robot. Its dimensions,
   limits, gains and thresholds are placeholders.
-- The leg model is 3-joint while the robot's legs are 2-joint (see "Software model vs.
+- The gait still uses the 3-joint leg model; the robot's legs are 2-joint (see "Software model vs.
   the physical robot").
 - Pitch/roll are accelerometer-only and will be noisy during walking.
 - The control loop is single-threaded. Its timing and jitter on the Pi 5 have not been
