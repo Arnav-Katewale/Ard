@@ -236,6 +236,25 @@ ultrasonic_every_n_steps = 5    # 10 Hz ultrasonic at 50 Hz loop (>= 60 ms betwe
 max_imu_failures = 5            # consecutive failed IMU reads before emergency stop
 max_consecutive_rejections = 10 # consecutive rejected joint commands before emergency stop
 
+# MuJoCo physics model (robodog/mujoco_sim). Leg lengths, hip spacing and joint
+# limits come from [geometry] and [[joints]] above; these are only the extra
+# physical properties the simulator needs. ALL are PLACEHOLDER estimates until
+# the robot is weighed and measured.
+[mujoco_model]
+torso_mass_kg = 0.8             # PLACEHOLDER: Pi 5 + battery + frame + 4 hip servos
+torso_height_mm = 40.0          # PLACEHOLDER
+upper_leg_mass_kg = 0.07        # PLACEHOLDER: includes the knee servo (~52 g)
+lower_leg_mass_kg = 0.03        # PLACEHOLDER
+leg_radius_mm = 6.0
+foot_radius_mm = 10.0          # must be larger than leg_radius_mm so only the feet touch the floor
+foot_friction = 1.0             # PLACEHOLDER: rubber foot on a hard floor
+servo_torque_limit_nm = 1.6     # LX-16A rated ~17 kg*cm (~1.67 N*m) at 7.4 V; datasheet, not measured
+servo_kp_nm_per_rad = 8.0       # PLACEHOLDER: servo stiffness
+joint_damping = 0.05            # N*m*s/rad, PLACEHOLDER
+joint_armature_kgm2 = 0.002     # PLACEHOLDER: gearbox inertia felt at the joint; without it the
+                                # light legs and stiff servos chatter in simulation
+timestep_s = 0.002
+
 # Software validation scenario (simulated sensor input, toy body model).
 # These values only define the simulated test; they are not robot measurements.
 [simulation]

@@ -28,7 +28,7 @@ You are looking at the **`adaptive-control-software` branch**. The project so fa
 |---|---|
 | **Robot hardware** | Raspberry Pi 5 · 9 LX-16A bus servos (hip + knee on each of 4 legs, plus a head servo) · Hiwonder USB HID servo controller · MPU6050 (GY-521) IMU · HC-SR04 ultrasonic sensor |
 | **Physically tested so far** (on `main`) | Pi-to-servo control over USB HID, measured servo movement tests, servo ID setup |
-| **This branch** | Python 3.11+, standard library only · 241 automated tests · full control loop validated on simulated sensor input |
+| **This branch** | Python 3.11+, standard library only (MuJoCo optional) · 251 automated tests · full control loop validated on simulated sensor input |
 | **Not yet done** | Running this branch's adaptive control on the physical robot |
 
 ## Run it (no hardware needed)
@@ -49,7 +49,7 @@ Then, in the activated environment:
 
 ```bash
 pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
-python -m pytest                    # 241 tests
+python -m pytest                    # 251 tests (10 need MuJoCo, see below)
 python tools/run_control_validation.py
 ```
 
@@ -119,7 +119,7 @@ servo bus. None of this branch's code has been run on the physical robot.
   changes, all rate-limited
 - **Closed-loop control flow:** wires everything together, with emergency-stop triggers
 - **Simulation-based validation:** `tools/run_control_validation.py`
-- **Automated tests:** 241 tests, no hardware needed
+- **Automated tests:** 251 tests, no hardware needed
 
 ### Hardware-facing code in this branch; physical validation pending
 
@@ -196,6 +196,7 @@ adds no hardware results and claims none.
 | `robodog/control/control_loop.py` | One closed-loop step plus emergency-stop triggers |
 | `robodog/robot.py` | Builds the loop from config with any set of backends (simulated or hardware) |
 | `robodog/simulation.py` | Simulated sensor input and a toy body model for software validation |
+| `robodog/mujoco_sim/model.py` | MuJoCo physics model of the robot, generated from the config (work in progress) |
 | `config/robot.toml` | Every tunable value (no magic numbers in code) |
 
 Hardware access sits behind small backend interfaces (`read_raw()`, `measure_echo_s()`,
@@ -288,6 +289,10 @@ comparing fixed and adaptive gait can answer that.
 | Power | 2S LiPo for the servos; a 5 V UBEC for the Pi (see the power plan on `main`) |
 
 Full wiring, Pi pin map and parts list: [`docs/wiring-map.html` on `main`](https://github.com/Arnav-Katewale/robot-dog/blob/main/docs/wiring-map.html).
+
+For the MuJoCo physics model (work in progress), `pip install -r requirements-sim.txt`;
+its tests are skipped when MuJoCo is not installed. Its masses, servo stiffness and
+friction are placeholders until the robot is weighed and measured.
 
 On the Raspberry Pi, `pip install -r requirements-pi.txt` installs this branch's
 hardware libraries (pyserial, lgpio, smbus2).

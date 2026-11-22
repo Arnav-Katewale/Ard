@@ -1,0 +1,2 @@
+# Optional: MuJoCo physics simulation (robodog/mujoco_sim). Not needed on the Pi.
+mujoco>=3.1
