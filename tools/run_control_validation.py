@@ -59,10 +59,10 @@ def print_step(rec: SimulationRecord, last_distance: float | None) -> None:
     print(f"    Body pitch correction: {fmt(a.correction.pitch_deg, '°')}")
     print(f"    Body roll correction:  {fmt(a.correction.roll_deg, '°')}")
     if r.joint_targets:
-        print("  Joint targets (hip / upper / knee):")
+        print("  Joint targets (hip / knee):")
         for leg in LEGS:
-            hip, upper, knee = (r.joint_targets[f"{leg}_{j}"] for j in ("hip", "upper", "knee"))
-            print(f"    {leg}: {hip:+6.1f}°  {upper:+6.1f}°  {knee:+6.1f}°")
+            hip, knee = (r.joint_targets[f"{leg}_{j}"] for j in ("hip", "knee"))
+            print(f"    {leg}: {hip:+6.1f}°  {knee:+6.1f}°")
     if r.rejected:
         print(f"  REJECTED (not sent): {r.rejected}")
     for note in r.notes:
@@ -71,7 +71,7 @@ def print_step(rec: SimulationRecord, last_distance: float | None) -> None:
 
 def write_csv(path: Path, records: list[SimulationRecord]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    joint_names = [f"{leg}_{j}" for leg in LEGS for j in ("hip", "upper", "knee")]
+    joint_names = [f"{leg}_{j}" for leg in LEGS for j in ("hip", "knee")]
     with path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["t_s", "true_pitch_deg", "true_roll_deg", "imu_pitch_deg", "imu_roll_deg",

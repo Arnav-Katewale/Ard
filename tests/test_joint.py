@@ -52,7 +52,8 @@ def test_repository_joint_config_builds():
     cfg = load_config()
     joints = [build(JointConfig, j, "joints") for j in cfg["joints"]]
     build(ServoBusConfig, section(cfg, "servo_bus"), "servo_bus")
-    assert len(joints) == 12
+    assert len(joints) == 8
+    assert {j.servo_id for j in joints} == set(range(1, 9))  # head servo 9 is not a leg joint
 
 
 # --- command safety ---------------------------------------------------------------

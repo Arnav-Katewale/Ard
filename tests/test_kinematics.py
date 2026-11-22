@@ -8,6 +8,7 @@ from robodog.kinematics import (
     LegGeometry,
     UnreachableError,
     joint_targets,
+    joint_targets_3dof,
     leg_fk,
     leg_fk_2dof,
     leg_ik,
@@ -57,11 +58,21 @@ def test_unreachable_positions_rejected(foot):
         leg_ik(*foot, 1, G)
 
 
-def test_joint_targets_names_and_unreachable_leg_identified():
+def test_3dof_joint_targets_names_and_unreachable_leg_identified():
     feet = {leg: (0.0, LEG_SIDE[leg] * 30.0, -120.0) for leg in ("FL", "FR", "RL", "RR")}
-    targets = joint_targets(feet, G)
-    assert len(targets) == 12 and "RR_knee" in targets
+    targets = joint_targets_3dof(feet, G)
+    assert len(targets) == 12 and "RR_upper" in targets
     feet["RL"] = (0.0, 30.0, -500.0)
+    with pytest.raises(UnreachableError, match="RL"):
+        joint_targets_3dof(feet, G)
+
+
+def test_joint_targets_are_hip_and_knee_per_leg():
+    feet = {leg: (10.0, -120.0) for leg in ("FL", "FR", "RL", "RR")}
+    targets = joint_targets(feet, G)
+    assert sorted(targets) == sorted(f"{leg}_{j}" for leg in ("FL", "FR", "RL", "RR") for j in ("hip", "knee"))
+    assert (targets["FL_hip"], targets["FL_knee"]) == pytest.approx(leg_ik_2dof(10.0, -120.0, G))
+    feet["RL"] = (0.0, -500.0)
     with pytest.raises(UnreachableError, match="RL"):
         joint_targets(feet, G)
 

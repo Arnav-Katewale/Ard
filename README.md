@@ -20,15 +20,15 @@ You are looking at the **`adaptive-control-software` branch**. The project so fa
    measurement, PID tilt correction, obstacle response and adaptive gait. It is
    written, tested and validated in simulation, but it **has not yet been integrated
    with the physical robot**.
-3. **Next integration step.** Switch this software's gait to the 2-joint leg
-   kinematics (now written and tested), and connect it to the existing USB HID servo interface from
-   `main`.
+3. **Next integration step.** The gait now uses the robot's real 2-joint legs and
+   servo IDs. What remains is to connect it to the existing USB HID servo interface
+   from `main`.
 
 | | |
 |---|---|
 | **Robot hardware** | Raspberry Pi 5 · 9 LX-16A bus servos (hip + knee on each of 4 legs, plus a head servo) · Hiwonder USB HID servo controller · MPU6050 (GY-521) IMU · HC-SR04 ultrasonic sensor |
 | **Physically tested so far** (on `main`) | Pi-to-servo control over USB HID, measured servo movement tests, servo ID setup |
-| **This branch** | Python 3.11+, standard library only · 240 automated tests · full control loop validated on simulated sensor input |
+| **This branch** | Python 3.11+, standard library only · 241 automated tests · full control loop validated on simulated sensor input |
 | **Not yet done** | Running this branch's adaptive control on the physical robot |
 
 ## Run it (no hardware needed)
@@ -49,7 +49,7 @@ Then, in the activated environment:
 
 ```bash
 pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
-python -m pytest                    # 240 tests
+python -m pytest                    # 241 tests
 python tools/run_control_validation.py
 ```
 
@@ -63,23 +63,23 @@ changes). Add `--csv data/runs/validation.csv` to save every control step.
 
 ## Software model vs. the physical robot
 
-This branch was developed as the next control-system iteration. Some of its software
-model, especially the 3-joint leg kinematics and the 12-joint configuration, was
-developed before being reconciled with the robot's current 2-servo-per-leg geometry.
-Bringing the two together is the next integration step:
+This branch was developed as the next control-system iteration. Its first version used
+3-joint legs and a 12-joint configuration, written before being reconciled with the
+robot's 2-servo-per-leg geometry. The leg model and joint configuration have since been
+switched to match the robot; the remaining differences are integration steps:
 
 | Part of this branch | Software model today | Physical robot | Integration work |
 |---|---|---|---|
-| Leg kinematics (`robodog/kinematics.py`) | 3 joints per leg (hip abduction, hip pitch, knee); 2-joint IK/FK now added alongside | 2 servos per leg (hip, knee) | Switch the gait and joint configuration from the 3-joint model to the 2-joint functions |
-| Joint configuration (`config/robot.toml`) | 12 leg joints | 8 leg servos + 1 head servo | Use the real servo IDs (FL 1/2, FR 3/4, RL 5/6, RR 7/8, head 9) and measured limits |
-| Roll correction | Per-leg height changes | Still possible with hip + knee | Re-check the correction range once the gait uses the 2-joint IK |
+| Leg kinematics (`robodog/kinematics.py`) | 2 joints per leg (hip pitch, knee); the 3-joint version is kept as a tested reference | 2 servos per leg (hip, knee) | Check angles and directions on the robot with it lifted |
+| Joint configuration (`config/robot.toml`) | 8 leg joints with the real servo IDs (FL 1/2, FR 3/4, RL 5/6, RR 7/8); head servo 9 not driven | 8 leg servos + 1 head servo | Replace placeholder limits, neutral angles and directions with measured values |
+| Roll correction | Per-leg height changes, done with hip + knee | Same | Check the correction range on the robot |
 | Servo communication (`robodog/servos/lx16a.py`) | LX-16A servo-level serial packets (the protocol a BusLinker passes straight through) | The robot uses the Hiwonder **USB HID** controller, which has its own command framing | Add a backend that drives the existing HID `Controller` from `main`, behind the same joint-safety layer |
 | Emergency stop | Servo `MOVE_STOP` command | HID controller offers position and unload commands | Map the stop behaviour onto the HID controller's commands |
 
 The control layers above the leg model (calibration, stability metrics, PID, obstacle
 states, adaptive gait, safety checks) do not depend on the number of joints and are
-expected to carry over. The 3-joint code stays in place as a tested reference until the
-2-joint version replaces it.
+unchanged by the switch to 2-joint legs. The 3-joint code stays in place as a tested
+reference.
 
 ## Project status
 
@@ -109,9 +109,8 @@ servo bus. None of this branch's code has been run on the physical robot.
 - **Joint safety:** limits, all-or-nothing commands, speed limit, emergency-stop logic
 - **IMU calibration algorithms:** gyro bias, mounting tilt and noise from stationary
   data, with a PASS/FAIL validation report (validated on simulated data only)
-- **Leg kinematics:** inverse and forward kinematics for the 3-joint software model and
-  for the physical 2-joint (hip + knee) leg; the gait still uses the 3-joint model (see
-  the table above)
+- **Leg kinematics:** inverse and forward kinematics for the physical 2-joint (hip +
+  knee) leg, used by the gait; the earlier 3-joint version is kept as a reference
 - **Trot gait generator:** foot paths as a function of gait phase
 - **Stability metrics:** RMS tilt, peak tilt, rocking and vibration, combined score
 - **Obstacle-state logic:** CLEAR / CAUTION / NEAR / STOP with hysteresis
@@ -120,7 +119,7 @@ servo bus. None of this branch's code has been run on the physical robot.
   changes, all rate-limited
 - **Closed-loop control flow:** wires everything together, with emergency-stop triggers
 - **Simulation-based validation:** `tools/run_control_validation.py`
-- **Automated tests:** 240 tests, no hardware needed
+- **Automated tests:** 241 tests, no hardware needed
 
 ### Hardware-facing code in this branch; physical validation pending
 
@@ -138,7 +137,6 @@ servo bus. None of this branch's code has been run on the physical robot.
 ### Not built or measured yet
 
 - MPU6050 driver for this branch's IMU interface
-- Gait and joint configuration using the 2-joint leg kinematics
 - Servo backend connecting this branch to the existing USB HID controller code
 - Ultrasonic calibration against known distances
 - Gyro-based orientation filtering / sensor fusion (e.g. complementary filter)
@@ -153,7 +151,7 @@ adds no hardware results and claims none.
 
 ## What's next
 
-1. **Integrate with the real robot:** switch the gait to the 2-joint kinematics, the real servo IDs, an
+1. **Integrate with the real robot:** an
    HID servo backend behind the joint-safety layer, and an MPU6050 driver.
 2. **Sensor bring-up and calibration:** wire the MPU6050 and HC-SR04, calibrate the IMU
    on the robot, and measure ultrasonic accuracy at known distances.
@@ -189,7 +187,7 @@ adds no hardware results and claims none.
 | `robodog/servos/lx16a.py` | LX-16A servo-level serial protocol: move, stop, torque, read position/voltage/temperature |
 | `robodog/servos/joint.py` | Joint limits, all-or-nothing commands, speed limit, latched emergency stop |
 | `robodog/calibration/calibration.py` | Stationary IMU calibration, JSON save/load, PASS/FAIL validation report |
-| `robodog/kinematics.py` | Leg forward and inverse kinematics: 3-joint model and the physical 2-joint leg |
+| `robodog/kinematics.py` | 2-joint (hip + knee) leg forward and inverse kinematics; 3-joint reference |
 | `robodog/control/stability.py` | Sliding-window stability metrics and composite score |
 | `robodog/control/obstacle.py` | CLEAR / CAUTION / NEAR / STOP with hysteresis |
 | `robodog/control/pid.py` | PID with output limits and anti-windup |
@@ -221,11 +219,12 @@ checks that calibrated readings show near-zero gyro, level pitch/roll and noise 
 thresholds. Limitation: from one pose, an x/y accelerometer bias cannot be told apart
 from a tilted mounting; a multi-pose calibration is planned.
 
-**Inverse kinematics (current 3-joint model).** Hip abduction comes from the triangle
-formed by the hip offset and the leg's length when viewed from the front. Hip pitch and
-knee bend then come from the law of cosines on the upper/lower leg triangle. That second
-step is exactly the 2-joint problem the physical leg needs, and `leg_ik_2dof` reuses it
-directly (shared helper `_planar_ik`). Unreachable positions raise
+**Inverse kinematics.** Each physical leg is a hip + knee in one plane. The foot is at
+distance `d = √(x² + z²)` from the hip, and the upper leg, lower leg and `d` form a
+triangle: the law of cosines gives the knee bend, and the hip angle is the direction to
+the foot plus the triangle's angle at the hip (`leg_ik_2dof`). The 3-joint reference
+model adds a hip-abduction step first, then solves the same triangle; both share the
+helper `_planar_ik`. Unreachable positions raise
 an error instead of producing a bad angle. Forward kinematics is used in tests to
 confirm IK round-trips.
 
@@ -272,7 +271,7 @@ the disturbance, obstacle states progress with hysteresis, gait changes are smoo
 joint commands pass through the safety layer.
 
 The body's response comes from a **deliberately simple toy model**, not robot physics,
-and it uses the 3-joint software model. The run therefore says nothing about whether
+and placeholder leg dimensions. The run therefore says nothing about whether
 adaptive control improves stability on the real robot. Only hardware experiments
 comparing fixed and adaptive gait can answer that.
 
@@ -302,8 +301,8 @@ Mechanical reference files:
 
 - This branch's control software has not been run on the physical robot. Its dimensions,
   limits, gains and thresholds are placeholders.
-- The gait still uses the 3-joint leg model; the robot's legs are 2-joint (see "Software model vs.
-  the physical robot").
+- Leg dimensions, joint limits and servo directions are placeholders until measured on
+  the robot (see "Software model vs. the physical robot").
 - Pitch/roll are accelerometer-only and will be noisy during walking.
 - The control loop is single-threaded. Its timing and jitter on the Pi 5 have not been
   measured, and no real-time guarantees are claimed.

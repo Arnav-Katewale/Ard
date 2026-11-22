@@ -44,29 +44,19 @@ echo = false                  # true only for Pi UART + half-duplex circuit wiri
 max_joint_speed_dps = 120.0   # conservative software speed limit
 min_move_time_ms = 20
 
-# Joints. Angles are joint angles (see robodog/servos/joint.py):
-#   hip   = abduction, rotation of the whole leg about the body x axis
-#   upper = hip pitch, 0 = leg pointing straight down, positive = foot forward
-#   knee  = knee bend, 0 = straight leg
+# Leg joints: 2 servos per leg, matching the physical robot. Servo IDs are the
+# real ones (FL 1/2, FR 3/4, RL 5/6, RR 7/8); the head servo (9) is not a leg
+# joint and is not driven by the gait. Angles are joint angles (see
+# robodog/servos/joint.py and robodog/kinematics.py):
+#   hip  = hip pitch, 0 = leg pointing straight down, positive = foot forward
+#   knee = knee bend, 0 = straight leg, positive = lower leg folds backward
 # servo angle = servo_neutral_deg + direction * joint angle
-# This 12-joint (3 per leg) software model predates reconciliation with the
-# physical robot, which has 2 servos per leg (hip, knee) plus a head servo:
-# FL 1/2, FR 3/4, RL 5/6, RR 7/8, head 9. Adapting to that is the next
-# integration step.
-# ALL ids, limits, neutrals and directions below are PLACEHOLDER values.
-# Right legs are assumed mirrored (-1).
+# Limits, neutrals and directions below are PLACEHOLDER values until measured
+# on the robot (lifted, legs unloaded). Right legs are assumed mirrored (-1).
 
 [[joints]]
 name = "FL_hip"
 servo_id = 1
-min_deg = -25.0
-max_deg = 25.0
-servo_neutral_deg = 120.0
-direction = 1
-
-[[joints]]
-name = "FL_upper"
-servo_id = 2
 min_deg = -60.0
 max_deg = 80.0
 servo_neutral_deg = 120.0
@@ -74,7 +64,7 @@ direction = 1
 
 [[joints]]
 name = "FL_knee"
-servo_id = 3
+servo_id = 2
 min_deg = 20.0
 max_deg = 140.0
 servo_neutral_deg = 60.0
@@ -82,15 +72,7 @@ direction = 1
 
 [[joints]]
 name = "FR_hip"
-servo_id = 4
-min_deg = -25.0
-max_deg = 25.0
-servo_neutral_deg = 120.0
-direction = -1
-
-[[joints]]
-name = "FR_upper"
-servo_id = 5
+servo_id = 3
 min_deg = -60.0
 max_deg = 80.0
 servo_neutral_deg = 120.0
@@ -98,7 +80,7 @@ direction = -1
 
 [[joints]]
 name = "FR_knee"
-servo_id = 6
+servo_id = 4
 min_deg = 20.0
 max_deg = 140.0
 servo_neutral_deg = 180.0
@@ -106,15 +88,7 @@ direction = -1
 
 [[joints]]
 name = "RL_hip"
-servo_id = 7
-min_deg = -25.0
-max_deg = 25.0
-servo_neutral_deg = 120.0
-direction = 1
-
-[[joints]]
-name = "RL_upper"
-servo_id = 8
+servo_id = 5
 min_deg = -60.0
 max_deg = 80.0
 servo_neutral_deg = 120.0
@@ -122,7 +96,7 @@ direction = 1
 
 [[joints]]
 name = "RL_knee"
-servo_id = 9
+servo_id = 6
 min_deg = 20.0
 max_deg = 140.0
 servo_neutral_deg = 60.0
@@ -130,15 +104,7 @@ direction = 1
 
 [[joints]]
 name = "RR_hip"
-servo_id = 10
-min_deg = -25.0
-max_deg = 25.0
-servo_neutral_deg = 120.0
-direction = -1
-
-[[joints]]
-name = "RR_upper"
-servo_id = 11
+servo_id = 7
 min_deg = -60.0
 max_deg = 80.0
 servo_neutral_deg = 120.0
@@ -146,7 +112,7 @@ direction = -1
 
 [[joints]]
 name = "RR_knee"
-servo_id = 12
+servo_id = 8
 min_deg = 20.0
 max_deg = 140.0
 servo_neutral_deg = 180.0
@@ -162,11 +128,9 @@ max_gyro_std_dps = 0.5
 max_accel_std_ms2 = 0.1
 
 [geometry]
-# PLACEHOLDER dimensions for the current 3-joint leg model; the physical legs
-# (2 joints each) have not been measured yet.
+# PLACEHOLDER dimensions; the physical legs have not been measured yet.
 body_length_mm = 200.0    # front-to-rear hip spacing
 body_width_mm = 110.0     # left-to-right hip spacing
-hip_offset_mm = 30.0      # sideways offset of the upper leg from the abduction axis
 upper_leg_mm = 80.0
 lower_leg_mm = 80.0
 

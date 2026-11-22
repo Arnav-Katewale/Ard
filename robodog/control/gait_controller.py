@@ -15,6 +15,9 @@ lateral position y by y*sin(c); pitching by c about y lowers a hip at
 forward position x by x*sin(c). So each hip's height above its foot is
 
     h = body_height + y_hip * sin(roll_correction) - x_hip * sin(pitch_correction)
+
+The legs have hip + knee joints only (no sideways joint), so each foot target
+is (x, z) in its leg's plane: x forward of the hip, z up (negative = below).
 """
 
 from __future__ import annotations
@@ -23,7 +26,7 @@ import math
 from dataclasses import dataclass
 
 from robodog.config import check
-from robodog.kinematics import LEG_SIDE, LEGS, LegGeometry
+from robodog.kinematics import LEGS, LegGeometry
 
 
 @dataclass(frozen=True)
@@ -61,8 +64,8 @@ def leg_phase(phase: float, offset: float) -> float:
 
 def foot_position(
     leg: str, phase: float, offset: float, p: GaitParams, body: BodyCorrection, g: LegGeometry
-) -> tuple[float, float, float]:
-    """Foot target for one leg, in that leg's frame (mm)."""
+) -> tuple[float, float]:
+    """Foot target (x, z) for one leg, in that leg's plane (mm)."""
     lp = leg_phase(phase, offset)
     if lp < p.duty_factor:
         s = lp / p.duty_factor
@@ -79,8 +82,7 @@ def foot_position(
         + y_hip * math.sin(math.radians(body.roll_deg))
         - x_hip * math.sin(math.radians(body.pitch_deg))
     )
-    y = LEG_SIDE[leg] * g.hip_offset_mm  # foot directly below the upper leg
-    return x, y, -hip_height + lift
+    return x, -hip_height + lift
 
 
 def in_stance(phase: float, offset: float, p: GaitParams) -> bool:
@@ -99,7 +101,7 @@ class GaitGenerator:
         self.phase = (self.phase + dt_s / params.cycle_time_s) % 1.0
         return self.phase
 
-    def feet(self, params: GaitParams, body: BodyCorrection) -> dict[str, tuple[float, float, float]]:
+    def feet(self, params: GaitParams, body: BodyCorrection) -> dict[str, tuple[float, float]]:
         return {
             leg: foot_position(leg, self.phase, self.config.phase_offsets[leg], params, body, self.geometry)
             for leg in LEGS

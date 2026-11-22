@@ -43,7 +43,7 @@ def test_level_robot_walks_with_valid_joint_targets():
     loop, _, _, port, clock = make_loop()
     results = run(loop, clock, 100)
     assert all(r.estop_reason is None and r.rejected is None for r in results)
-    assert len(results[-1].joint_targets) == 12
+    assert len(results[-1].joint_targets) == 8
     assert len(port.written) > 100  # commands reached the simulated servo bus
 
 

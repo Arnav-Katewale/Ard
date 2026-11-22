@@ -1,11 +1,11 @@
 """Leg geometry and leg kinematics: 3-DOF model and the physical 2-DOF leg.
 
 The physical robot's legs have two servos each (hip and knee): leg_ik_2dof /
-leg_fk_2dof. They use the same law-of-cosines solution as step 2 below.
-The gait and joint configuration still use the 3-DOF model; switching them
-over is a separate step.
+leg_fk_2dof, used by the gait through joint_targets. They use the same
+law-of-cosines solution as step 2 below.
 
-The 3-DOF software model gives each leg three joints:
+The earlier 3-DOF software model (leg_ik / leg_fk / joint_targets_3dof) is kept
+as a tested reference. It gives each leg three joints:
     hip   - abduction: rotates the whole leg about the body x axis
     upper - hip pitch: 0 = upper leg pointing straight down, + = swings forward
     knee  - knee bend: 0 = straight leg, + = lower leg folds backward
@@ -49,9 +49,9 @@ class UnreachableError(ValueError):
 class LegGeometry:
     body_length_mm: float  # front-to-rear hip spacing
     body_width_mm: float   # left-to-right hip spacing
-    hip_offset_mm: float   # L1
     upper_leg_mm: float    # L2
     lower_leg_mm: float    # L3
+    hip_offset_mm: float = 0.0  # L1, 3-DOF reference model only
 
     def __post_init__(self):
         for name in ("body_length_mm", "body_width_mm", "upper_leg_mm", "lower_leg_mm"):
@@ -128,11 +128,24 @@ def leg_fk(hip_deg: float, upper_deg: float, knee_deg: float, side: int, g: LegG
     return x, y, z
 
 
-def joint_targets(feet: dict[str, tuple[float, float, float]], g: LegGeometry) -> dict[str, float]:
-    """Foot positions per leg -> joint-angle targets named like 'FL_knee'.
+def joint_targets(feet: dict[str, tuple[float, float]], g: LegGeometry) -> dict[str, float]:
+    """2-DOF foot positions (x, z) per leg -> joint targets named like 'FL_hip', 'FL_knee'.
 
     Raises UnreachableError naming the leg if any foot cannot be reached.
     """
+    targets = {}
+    for leg, (x, z) in feet.items():
+        try:
+            hip, knee = leg_ik_2dof(x, z, g)
+        except UnreachableError as exc:
+            raise UnreachableError(f"{leg}: {exc}") from exc
+        targets[f"{leg}_hip"] = hip
+        targets[f"{leg}_knee"] = knee
+    return targets
+
+
+def joint_targets_3dof(feet: dict[str, tuple[float, float, float]], g: LegGeometry) -> dict[str, float]:
+    """3-DOF reference: foot positions (x, y, z) -> 'FL_hip', 'FL_upper', 'FL_knee' targets."""
     targets = {}
     for leg, (x, y, z) in feet.items():
         try:
