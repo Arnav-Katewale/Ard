@@ -58,9 +58,17 @@ def test_obstacle_approach_reaches_stop_and_stands():
 def test_excessive_tilt_triggers_emergency_stop():
     loop, imu, _, port, clock = make_loop()
     run(loop, clock, 10)
-    imu.set_attitude(pitch_deg=0.0, roll_deg=35.0)
-    result = run(loop, clock, 1)[0]
+    # The body rolls over at 175 deg/s (a fall), and the gyro sees that rate:
+    # the tilt estimate follows within a few steps and the stop fires.
+    roll, rate = 0.0, 175.0
+    for _ in range(15):
+        roll += rate * loop.dt_s
+        imu.set_attitude(pitch_deg=0.0, roll_deg=roll, roll_rate_dps=rate)
+        result = run(loop, clock, 1)[0]
+        if result.estop_reason:
+            break
     assert "tilt" in result.estop_reason
+    assert roll <= 40.0  # stopped within about 5 deg of crossing the 30 deg limit
     assert loop.joints.estop_active
     assert all(s.stopped for s in port.servos.values())
     sent = len(port.written)

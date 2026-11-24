@@ -11,7 +11,7 @@ from robodog.config import build, load_config, section
 from robodog.sensors.imu import Imu, ImuConfig
 from robodog.sensors.simulated_sensors import SimulatedImuBackend
 
-CONFIG = ImuConfig(axis_map=["+x", "+y", "+z"], max_accel_ms2=156.9, max_gyro_dps=2000.0)
+CONFIG = ImuConfig(axis_map=["+x", "+y", "+z"], max_accel_ms2=156.9, max_gyro_dps=2000.0, complementary_alpha=0.98)
 THRESHOLDS = CalibrationThresholds(
     min_samples=200, max_gyro_mean_dps=0.2, max_level_error_deg=0.5, max_gyro_std_dps=0.5, max_accel_std_ms2=0.1
 )

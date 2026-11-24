@@ -20,6 +20,10 @@
 axis_map = ["+x", "+y", "+z"]
 max_accel_ms2 = 156.9     # PLACEHOLDER: MPU6050's widest range (+/-16 g); the driver will set the range
 max_gyro_dps = 2000.0     # PLACEHOLDER: MPU6050's widest range (+/-2000 deg/s)
+# Complementary filter: weight on the gyro when estimating pitch/roll (see
+# robodog/sensors/imu.py). 0.98 at 50 Hz pulls drift back over about 1 s.
+# PLACEHOLDER: tune once real walking data shows the jolt and drift sizes.
+complementary_alpha = 0.98
 
 [ultrasonic]
 # HC-SR04 (5 V). Its Echo reaches GPIO24 through a 1 kOhm / 2 kOhm divider,

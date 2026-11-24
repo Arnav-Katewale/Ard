@@ -15,7 +15,7 @@ from robodog.sensors.imu import (
 from robodog.sensors.simulated_sensors import SimulatedImuBackend
 
 G = GRAVITY_MS2
-CONFIG = ImuConfig(axis_map=["+x", "+y", "+z"], max_accel_ms2=156.9, max_gyro_dps=2000.0)
+CONFIG = ImuConfig(axis_map=["+x", "+y", "+z"], max_accel_ms2=156.9, max_gyro_dps=2000.0, complementary_alpha=0.98)
 
 
 class FixedBackend:
@@ -70,7 +70,7 @@ def test_rotated_mounting_axis_map():
 @pytest.mark.parametrize("bad", [["+x", "+y"], ["+x", "+x", "+z"], ["x", "+y", "+z"], ["+x", "+y", "+w"]])
 def test_invalid_axis_map_rejected(bad):
     with pytest.raises(ConfigError):
-        ImuConfig(axis_map=bad, max_accel_ms2=150.0, max_gyro_dps=2000.0)
+        ImuConfig(axis_map=bad, max_accel_ms2=150.0, max_gyro_dps=2000.0, complementary_alpha=0.98)
 
 
 def test_repository_config_builds():
@@ -123,3 +123,71 @@ def test_simulated_noise_is_deterministic_for_a_seed():
     a = SimulatedImuBackend(accel_noise_std=0.2, seed=7).read_raw()
     b = SimulatedImuBackend(accel_noise_std=0.2, seed=7).read_raw()
     assert a == b
+
+
+# --- complementary filter -------------------------------------------------------
+
+
+class SteppedClock:
+    def __init__(self, dt=0.02):
+        self.now, self.dt = 0.0, dt
+
+    def __call__(self):
+        self.now += self.dt
+        return self.now
+
+
+def _tilted(pitch_deg=0.0, roll_deg=0.0):
+    """Gravity reaction (accelerometer reading) for a still body at this tilt."""
+    th, ph = math.radians(pitch_deg), math.radians(roll_deg)
+    return (-G * math.sin(th), G * math.sin(ph) * math.cos(th), G * math.cos(ph) * math.cos(th))
+
+
+def test_filter_step_matches_hand_calculation():
+    backend = FixedBackend(_tilted(pitch_deg=10.0))
+    imu = Imu(backend, CONFIG, clock=SteppedClock(dt=0.02))
+    first = imu.read()
+    assert first.pitch_deg == pytest.approx(10.0)  # starts from the accelerometer
+    # Accelerometer now says level, gyro says pitching nose-down at 50 deg/s:
+    # 0.98 * (10 + 50 * 0.02) + 0.02 * 0 = 10.78
+    backend.sample = RawImuSample(accel=_tilted(0.0), gyro=(0.0, 50.0, 0.0))
+    assert imu.read().pitch_deg == pytest.approx(0.98 * (10.0 + 1.0), abs=1e-9)
+
+
+def test_filter_converges_to_accelerometer_tilt_when_still():
+    backend = FixedBackend(_tilted(0.0))
+    imu = Imu(backend, CONFIG, clock=SteppedClock())
+    imu.read()
+    backend.sample = RawImuSample(accel=_tilted(pitch_deg=4.0, roll_deg=-6.0), gyro=(0.0, 0.0, 0.0))
+    for _ in range(500):  # 10 s at 50 Hz, about 10 time constants
+        r = imu.read()
+    assert (r.pitch_deg, r.roll_deg) == pytest.approx((4.0, -6.0), abs=0.01)
+
+
+def test_short_accelerometer_jolt_barely_moves_the_estimate():
+    backend = FixedBackend(_tilted(0.0))
+    imu = Imu(backend, CONFIG, clock=SteppedClock())
+    imu.read()
+    # A footstep: one sample with a big sideways and forward kick, body not rotating.
+    backend.sample = RawImuSample(accel=(9.0, 6.0, G), gyro=(0.0, 0.0, 0.0))
+    jolted = imu.read()
+    raw_pitch, raw_roll = accel_pitch_roll(9.0, 6.0, G)
+    assert abs(raw_pitch) > 25 and abs(raw_roll) > 20          # accelerometer alone is far off
+    assert abs(jolted.pitch_deg) < 1.0 and abs(jolted.roll_deg) < 1.0
+
+
+def test_filter_restarts_from_accelerometer_after_failed_read():
+    backend = SimulatedImuBackend()
+    imu = Imu(backend, CONFIG, clock=SteppedClock())
+    imu.read()                                   # level
+    backend.set_attitude(pitch_deg=20.0, roll_deg=0.0)
+    backend.fail_next = True
+    assert not imu.read().valid                  # gap: estimate thrown away
+    assert imu.read().pitch_deg == pytest.approx(20.0)
+
+
+@pytest.mark.parametrize("alpha", [-0.1, 1.0, 1.5])
+def test_invalid_complementary_alpha_rejected(alpha):
+    with pytest.raises(ConfigError):
+        ImuConfig(axis_map=["+x", "+y", "+z"], max_accel_ms2=156.9, max_gyro_dps=2000.0,
+                  complementary_alpha=alpha)
