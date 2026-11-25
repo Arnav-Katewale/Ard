@@ -44,7 +44,10 @@ class MujocoSim:
     """One MuJoCo model + state, with a simulated clock.
 
     The robot starts standing: every joint at standing_targets(cfg) and the
-    torso resting at gait body height.
+    torso resting at gait body height. It then stands still for
+    [mujoco_model] settle_s so contacts and servos reach equilibrium before
+    any controller runs, as the real robot stands before it walks. Without
+    this the first IMU readings come from the settling jolt.
     """
 
     def __init__(self, cfg: dict[str, Any], model=None):
@@ -59,6 +62,7 @@ class MujocoSim:
         m = section(cfg, "mujoco_model")
         self.data.qpos[2] = (section(cfg, "gait")["base"]["body_height_mm"] + m["foot_radius_mm"]) / 1000.0
         mujoco.mj_forward(self.model, self.data)
+        self.sleep(m["settle_s"])
 
     def clock(self) -> float:
         return float(self.data.time)

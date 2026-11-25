@@ -54,6 +54,7 @@ class MujocoModelConfig:
     joint_damping: float
     joint_armature_kgm2: float
     timestep_s: float
+    settle_s: float
 
     def __post_init__(self):
         for f in ("torso_mass_kg", "torso_height_mm", "upper_leg_mass_kg", "lower_leg_mass_kg",
@@ -62,6 +63,7 @@ class MujocoModelConfig:
             check(getattr(self, f) > 0, f"mujoco_model.{f} must be positive")
         check(self.joint_damping >= 0, "mujoco_model.joint_damping must be >= 0")
         check(self.joint_armature_kgm2 >= 0, "mujoco_model.joint_armature_kgm2 must be >= 0")
+        check(self.settle_s >= 0, "mujoco_model.settle_s must be >= 0")
         check(self.foot_radius_mm > self.leg_radius_mm,
               "mujoco_model.foot_radius_mm must exceed leg_radius_mm so only the feet touch the floor")
 

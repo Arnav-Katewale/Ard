@@ -76,3 +76,22 @@ def test_sonar_reports_no_echo_in_open_space():
     loop = build_sim_control_loop(CFG, sim)
     first = next(run(loop, sim, seconds=loop.dt_s))
     assert not first.ultrasonic.valid
+
+
+def test_robot_trots_five_seconds_without_falling():
+    """The unchanged control loop walks the simulated robot: no stop, small tilt, forward progress."""
+    sim = MujocoSim(CFG)  # already settled standing
+    loop = build_sim_control_loop(CFG, sim)
+    start_x = sim.torso_position_m()[0]
+    worst_tilt = worst_error = 0.0
+    for result in run(loop, sim, seconds=5.0):
+        assert result.estop_reason is None, result.estop_reason
+        assert result.rejected is None, result.rejected
+        assert result.imu.valid
+        pitch, roll = sim.body_pitch_roll_deg()
+        worst_tilt = max(worst_tilt, abs(pitch), abs(roll))
+        worst_error = max(worst_error, abs(result.imu.pitch_deg - pitch), abs(result.imu.roll_deg - roll))
+    assert worst_tilt < 15.0          # true body tilt, from the simulator
+    assert worst_error < 5.0          # complementary filter vs. true tilt
+    assert sim.torso_position_m()[0] - start_x > 0.1   # it actually walked forward
+    assert sim.torso_position_m()[2] > 0.08            # torso still well off the floor

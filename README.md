@@ -28,7 +28,7 @@ You are looking at the **`adaptive-control-software` branch**. The project so fa
 |---|---|
 | **Robot hardware** | Raspberry Pi 5 · 9 LX-16A bus servos (hip + knee on each of 4 legs, plus a head servo) · Hiwonder USB HID servo controller · MPU6050 (GY-521) IMU · HC-SR04 ultrasonic sensor |
 | **Physically tested so far** (on `main`) | Pi-to-servo control over USB HID, measured servo movement tests, servo ID setup |
-| **This branch** | Python 3.11+, standard library only (MuJoCo optional) · 264 automated tests · full control loop validated on simulated sensor input |
+| **This branch** | Python 3.11+, standard library only (MuJoCo optional) · 265 automated tests · full control loop validated on simulated sensor input |
 | **Not yet done** | Running this branch's adaptive control on the physical robot |
 
 ## Run it (no hardware needed)
@@ -49,7 +49,7 @@ Then, in the activated environment:
 
 ```bash
 pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
-python -m pytest                    # 264 tests (16 need MuJoCo, see below)
+python -m pytest                    # 265 tests (17 need MuJoCo, see below)
 python tools/run_control_validation.py
 ```
 
@@ -119,7 +119,7 @@ servo bus. None of this branch's code has been run on the physical robot.
   changes, all rate-limited
 - **Closed-loop control flow:** wires everything together, with emergency-stop triggers
 - **Simulation-based validation:** `tools/run_control_validation.py`
-- **Automated tests:** 264 tests, no hardware needed
+- **Automated tests:** 265 tests, no hardware needed
 
 ### Hardware-facing code in this branch; physical validation pending
 
@@ -300,13 +300,12 @@ For the MuJoCo physics model (work in progress), `pip install -r requirements-si
 its tests are skipped when MuJoCo is not installed. Its masses, servo stiffness and
 friction are placeholders until the robot is weighed and measured.
 
-Known issue found in the MuJoCo model: with the placeholder servo stiffness
-(8 N·m/rad) the simulated trot is bouncy enough that the robot briefly leaves the
-ground. The IMU rejects those free-fall readings, the tilt filter restarts from a
-jolted accelerometer value, and the 30 deg emergency stop trips falsely. The
-complementary filter fixed the steady-state tilt error; the servo stiffness needs
-measuring before a full simulated trot is meaningful. This is a simulation finding,
-not yet seen on hardware.
+In the MuJoCo model the unchanged control loop trots the robot for 5 s without an
+emergency stop: worst body tilt about 7 deg, tilt estimate within about 4 deg of the
+simulator's true tilt, about 0.4 m forward. This needed a softer placeholder servo
+stiffness (4 N·m/rad): at 8 the simulated robot bounced off the ground, the IMU
+rejected those free-fall readings and the 30 deg emergency stop tripped falsely.
+The real servo stiffness has not been measured, so these are simulation results only.
 
 On the Raspberry Pi, `pip install -r requirements-pi.txt` installs this branch's
 hardware libraries (pyserial, lgpio, smbus2).
