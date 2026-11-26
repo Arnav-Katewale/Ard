@@ -219,9 +219,11 @@ CAUTION = 0.7
 NEAR = 0.4
 
 [adaptive.obstacle_step_height_add_mm]
+# PLACEHOLDER. NEAR was 8 mm; in the MuJoCo model the higher step made the trot
+# rock sideways until the tilt e-stop fired (wall terrain). Revisit on hardware.
 CLEAR = 0.0
 CAUTION = 0.0
-NEAR = 8.0
+NEAR = 0.0
 
 [adaptive.obstacle_cycle_time_scale]
 CLEAR = 1.0

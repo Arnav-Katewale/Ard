@@ -35,6 +35,7 @@ from typing import Any
 from robodog.config import build, check, section
 from robodog.control.gait_controller import GaitParams
 from robodog.kinematics import LEG_END, LEG_SIDE, LEGS, LegGeometry, joint_targets
+from robodog.mujoco_sim.terrain import terrain_geoms
 from robodog.servos.joint import JointConfig
 
 MM = 0.001
@@ -75,8 +76,10 @@ def standing_targets(cfg: dict[str, Any]) -> dict[str, float]:
     return joint_targets({leg: (0.0, -base.body_height_mm) for leg in LEGS}, g)
 
 
-def build_mjcf(cfg: dict[str, Any]) -> str:
-    """Return the MJCF (MuJoCo XML) text for the robot described by `cfg`."""
+def build_mjcf(cfg: dict[str, Any], terrain: str = "flat") -> str:
+    """Return the MJCF (MuJoCo XML) text for the robot described by `cfg`, on the named terrain
+    (see robodog/mujoco_sim/terrain.py)."""
+    ground = terrain_geoms(terrain)
     g = build(LegGeometry, section(cfg, "geometry"), "geometry")
     base = build(GaitParams, section(cfg, "gait")["base"], "gait.base")
     m = build(MujocoModelConfig, section(cfg, "mujoco_model"), "mujoco_model")
@@ -130,7 +133,7 @@ def build_mjcf(cfg: dict[str, Any]) -> str:
   </default>
   <worldbody>
     <light pos="0 0 3" dir="0 0 -1" directional="true"/>
-    <geom name="floor" type="plane" size="10 10 0.1" rgba="0.35 0.4 0.45 1"/>
+    {ground}
     <body name="torso" pos="0 0 {start_z:.4f}">
       <freejoint name="root"/>
       <geom name="torso" type="box" size="{half_len:.4f} {half_wid:.4f} {half_h:.4f}"
@@ -152,8 +155,8 @@ def build_mjcf(cfg: dict[str, Any]) -> str:
 """
 
 
-def load_model(cfg: dict[str, Any]):
+def load_model(cfg: dict[str, Any], terrain: str = "flat"):
     """Compile the generated MJCF into a mujoco.MjModel (imports mujoco lazily)."""
     import mujoco
 
-    return mujoco.MjModel.from_xml_string(build_mjcf(cfg))
+    return mujoco.MjModel.from_xml_string(build_mjcf(cfg, terrain))

@@ -28,7 +28,7 @@ You are looking at the **`adaptive-control-software` branch**. The project so fa
 |---|---|
 | **Robot hardware** | Raspberry Pi 5 · 9 LX-16A bus servos (hip + knee on each of 4 legs, plus a head servo) · Hiwonder USB HID servo controller · MPU6050 (GY-521) IMU · HC-SR04 ultrasonic sensor |
 | **Physically tested so far** (on `main`) | Pi-to-servo control over USB HID, measured servo movement tests, servo ID setup |
-| **This branch** | Python 3.11+, standard library only (MuJoCo optional) · 265 automated tests · full control loop validated on simulated sensor input |
+| **This branch** | Python 3.11+, standard library only (MuJoCo optional) · 278 automated tests · full control loop validated on simulated sensor input |
 | **Not yet done** | Running this branch's adaptive control on the physical robot |
 
 ## Run it (no hardware needed)
@@ -49,7 +49,7 @@ Then, in the activated environment:
 
 ```bash
 pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
-python -m pytest                    # 265 tests (17 need MuJoCo, see below)
+python -m pytest                    # 278 tests (30 need MuJoCo, see below)
 python tools/run_control_validation.py
 ```
 
@@ -119,7 +119,7 @@ servo bus. None of this branch's code has been run on the physical robot.
   changes, all rate-limited
 - **Closed-loop control flow:** wires everything together, with emergency-stop triggers
 - **Simulation-based validation:** `tools/run_control_validation.py`
-- **Automated tests:** 265 tests, no hardware needed
+- **Automated tests:** 278 tests, no hardware needed
 
 ### Hardware-facing code in this branch; physical validation pending
 
@@ -198,6 +198,7 @@ adds no hardware results and claims none.
 | `robodog/simulation.py` | Simulated sensor input and a toy body model for software validation |
 | `robodog/mujoco_sim/model.py` | MuJoCo physics model of the robot, generated from the config (work in progress) |
 | `robodog/mujoco_sim/backends.py`, `runner.py` | Simulated IMU, sonar and LX-16A servo port, so the unchanged control loop drives the MuJoCo model |
+| `robodog/mujoco_sim/terrain.py` | Test terrains for the MuJoCo model: flat, side slope, ramp, bumps, wall (placeholder sizes) |
 | `config/robot.toml` | Every tunable value (no magic numbers in code) |
 
 Hardware access sits behind small backend interfaces (`read_raw()`, `measure_echo_s()`,
@@ -307,6 +308,20 @@ stiffness (4 N·m/rad): at 8 the simulated robot bounced off the ground, the IMU
 rejected those free-fall readings and the 30 deg emergency stop tripped falsely.
 The real servo stiffness has not been measured, so these are simulation results only.
 
+Terrain runs (8 s each, simulation only, placeholder sizes): the robot trots across a
+5 deg side slope, a 5 deg ramp and a row of 8 mm bumps without an emergency stop
+(worst true tilt about 14 to 18 deg). On the ramp the IMU reads the nose-up tilt and
+the adaptive controller pitches the body against it. Facing a wall it slows through
+CAUTION and NEAR and stands about 15 cm in front of it (the STOP threshold).
+
+Two findings from these runs:
+- The obstacle response used to add 8 mm of step height when NEAR. In the model that
+  made the trot rock sideways until the 30 deg tilt stop fired, so the placeholder is
+  now 0. The simulated trot is only stable close to the base gait: a 29 mm step, or a
+  1.0 s cycle at full stride, also tips it over sideways.
+- On an 8 deg ramp the robot stalls about 13 cm up the incline, so the ramp terrain uses
+  5 deg.
+
 On the Raspberry Pi, `pip install -r requirements-pi.txt` installs this branch's
 hardware libraries (pyserial, lgpio, smbus2).
 
@@ -322,6 +337,8 @@ Mechanical reference files:
 - Leg dimensions, joint limits and servo directions are placeholders until measured on
   the robot (see "Software model vs. the physical robot").
 - The pitch/roll filter weight is a placeholder; it has only been checked in simulation.
+- In the MuJoCo model the trot only stays upright close to the base gait parameters, and
+  it cannot climb an 8 deg ramp. Both are simulation findings with placeholder physics.
 - The control loop is single-threaded. Its timing and jitter on the Pi 5 have not been
   measured, and no real-time guarantees are claimed.
 - The simulation is a toy model used to exercise code paths, not to predict performance.

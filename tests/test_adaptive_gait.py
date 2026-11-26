@@ -1,3 +1,4 @@
+import dataclasses
 import math
 
 import pytest
@@ -67,7 +68,12 @@ def test_correction_is_rate_limited():
 
 
 def test_near_obstacle_shortens_stride_raises_step_and_slows():
-    out = run(AdaptiveGaitController(CFG, BASE), 200, obstacle=ObstacleState.NEAR)
+    # Explicit table values, so the mechanism is tested independently of the
+    # placeholder config (which currently adds no step height near obstacles).
+    cfg = dataclasses.replace(
+        CFG, obstacle_step_height_add_mm={**CFG.obstacle_step_height_add_mm, "NEAR": 8.0}
+    )
+    out = run(AdaptiveGaitController(cfg, BASE), 200, obstacle=ObstacleState.NEAR)
     assert out.params.stride_length_mm == pytest.approx(BASE.stride_length_mm * 0.4)
     assert out.params.step_height_mm == pytest.approx(BASE.step_height_mm + 8.0)
     assert out.params.cycle_time_s == pytest.approx(BASE.cycle_time_s * 1.25)

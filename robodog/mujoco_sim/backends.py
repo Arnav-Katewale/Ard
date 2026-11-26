@@ -48,13 +48,16 @@ class MujocoSim:
     [mujoco_model] settle_s so contacts and servos reach equilibrium before
     any controller runs, as the real robot stands before it walks. Without
     this the first IMU readings come from the settling jolt.
+
+    `terrain` names the ground (robodog/mujoco_sim/terrain.py); every terrain
+    is level-ish at the start position, so the same start height works.
     """
 
-    def __init__(self, cfg: dict[str, Any], model=None):
+    def __init__(self, cfg: dict[str, Any], model=None, terrain: str = "flat"):
         import mujoco
 
         self._mj = mujoco
-        self.model = model if model is not None else load_model(cfg)
+        self.model = model if model is not None else load_model(cfg, terrain)
         self.data = mujoco.MjData(self.model)
         self.servo_port = MujocoServoPort(self, [build(JointConfig, j, "joints") for j in cfg["joints"]])
         self.servo_port.set_initial_pose(standing_targets(cfg))
