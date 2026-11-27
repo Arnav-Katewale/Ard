@@ -1,2 +1,3 @@
 # Optional: MuJoCo physics simulation (robodog/mujoco_sim). Not needed on the Pi.
 mujoco>=3.1
+matplotlib>=3.8   # plots from scripts/compare_fixed_vs_adaptive.py

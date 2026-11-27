@@ -28,7 +28,7 @@ You are looking at the **`adaptive-control-software` branch**. The project so fa
 |---|---|
 | **Robot hardware** | Raspberry Pi 5 · 9 LX-16A bus servos (hip + knee on each of 4 legs, plus a head servo) · Hiwonder USB HID servo controller · MPU6050 (GY-521) IMU · HC-SR04 ultrasonic sensor |
 | **Physically tested so far** (on `main`) | Pi-to-servo control over USB HID, measured servo movement tests, servo ID setup |
-| **This branch** | Python 3.11+, standard library only (MuJoCo optional) · 278 automated tests · full control loop validated on simulated sensor input |
+| **This branch** | Python 3.11+, standard library only (MuJoCo optional) · 285 automated tests · full control loop validated on simulated sensor input |
 | **Not yet done** | Running this branch's adaptive control on the physical robot |
 
 ## Run it (no hardware needed)
@@ -49,7 +49,7 @@ Then, in the activated environment:
 
 ```bash
 pip install -r requirements.txt     # only pytest; the robot code needs no extra packages
-python -m pytest                    # 278 tests (30 need MuJoCo, see below)
+python -m pytest                    # 285 tests (31 need MuJoCo, see below)
 python tools/run_control_validation.py
 ```
 
@@ -119,7 +119,7 @@ servo bus. None of this branch's code has been run on the physical robot.
   changes, all rate-limited
 - **Closed-loop control flow:** wires everything together, with emergency-stop triggers
 - **Simulation-based validation:** `tools/run_control_validation.py`
-- **Automated tests:** 278 tests, no hardware needed
+- **Automated tests:** 285 tests, no hardware needed
 
 ### Hardware-facing code in this branch; physical validation pending
 
@@ -199,6 +199,7 @@ adds no hardware results and claims none.
 | `robodog/mujoco_sim/model.py` | MuJoCo physics model of the robot, generated from the config (work in progress) |
 | `robodog/mujoco_sim/backends.py`, `runner.py` | Simulated IMU, sonar and LX-16A servo port, so the unchanged control loop drives the MuJoCo model |
 | `robodog/mujoco_sim/terrain.py` | Test terrains for the MuJoCo model: flat, side slope, ramp, bumps, wall (placeholder sizes) |
+| `robodog/mujoco_sim/compare.py`, `scripts/compare_fixed_vs_adaptive.py` | Fixed vs adaptive gait on each terrain: results table and tilt plot |
 | `config/robot.toml` | Every tunable value (no magic numbers in code) |
 
 Hardware access sits behind small backend interfaces (`read_raw()`, `measure_echo_s()`,
@@ -321,6 +322,35 @@ Two findings from these runs:
   1.0 s cycle at full stride, also tips it over sideways.
 - On an 8 deg ramp the robot stalls about 13 cm up the incline, so the ramp terrain uses
   5 deg.
+
+### Fixed vs adaptive gait (simulation only)
+
+`python scripts/compare_fixed_vs_adaptive.py` walks each terrain for 8 s in four modes.
+*Fixed* switches adaptation off in a copy of the config (always the base gait, no body
+correction); the safety stops stay on in every mode. The two middle modes separate the
+adaptive controller's two effects: the shorter stride (the placeholder stability
+references report UNSTABLE while walking, which halves the stride) and the body
+correction (roll and pitch PIDs).
+
+| Terrain | Fixed | Fixed, half stride | Adaptive, no body correction | Adaptive |
+|---|---|---|---|---|
+| Flat | e-stop after 1.4 s | 8.4 / 13.9 / 0.42 | 3.8 / 9.2 / 0.46 | 3.3 / 7.2 / 0.66 |
+| Side slope 5 deg | e-stop after 0.7 s | 11.6 / 21.7 / 0.53 | 10.2 / 21.9 / 0.54 | 7.4 / 14.2 / 0.48 |
+| Ramp 5 deg | e-stop after 2.2 s | 9.8 / 16.4 / 0.26 | 8.9 / 17.2 / 0.22 | 8.2 / 14.4 / 0.42 |
+| Bumps 8 mm | 10.0 / 21.7 / 0.47 | 7.6 / 15.0 / 0.32 | 7.7 / 18.8 / 0.30 | 8.0 / 18.2 / 0.34 |
+
+Cells: RMS tilt (deg) / peak tilt (deg) / distance (m), true values from the simulator.
+
+![Fixed vs adaptive tilt, MuJoCo simulation](docs/sim/fixed_vs_adaptive.png)
+
+What this shows, in this model only:
+- At the full 60 mm base stride the fixed gait tips past the 30 deg emergency stop on
+  flat ground, the side slope and the ramp. Halving the stride alone prevents that, so
+  most of the adaptive gait's advantage here comes from walking with a shorter stride.
+- Body correction lowers the RMS tilt further on the side slope (10.2 to 7.4 deg) and
+  the peak tilt on flat, slope and ramp. On bumps it makes no clear difference.
+- The physics are placeholders and the stride reduction comes from placeholder
+  stability references, so none of this predicts the real robot.
 
 On the Raspberry Pi, `pip install -r requirements-pi.txt` installs this branch's
 hardware libraries (pyserial, lgpio, smbus2).
